@@ -363,11 +363,12 @@ def build_strategy(c):
         garch_warn = "高波动聚集下建议减半仓位"
 
     # 最新信号HTML
+    sig_date = c.get("date_end", "")
     sig_html = """<li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:%s15;border-left:3px solid %s">
-      <strong>%s 最新信号状态：</strong><span style="color:%s;font-weight:700">%s</span>
-      （最新综合评分 %.3f，信号 %s）
-      <span style="font-size:0.8rem;color:#64748b">← 仅反映最新交易日，判断明天是否适合做T</span></li>""" % (
-        sig_color, sig_color, sig_icon, sig_color, sig_label, score_last,
+      <strong>%s 最新信号状态（%s）：</strong><span style="color:%s;font-weight:700">%s</span>
+      （综合评分 %.3f，信号 %s）
+      <span style="font-size:0.8rem;color:#64748b">← 基于最近交易日数据，判断下一日是否适合做T</span></li>""" % (
+        sig_color, sig_color, sig_icon, sig_date, sig_color, sig_label, score_last,
         "已触发" if signal_last == 1 else "未触发")
 
     return """<div class="card">
