@@ -245,11 +245,14 @@ def extract_stats(code, config):
             data["ind_corr"] = round(float(stock_ret.loc[common].corr(ind_ret.loc[common])), 4)
             data["idx_corr"] = round(float(stock_ret.loc[common].corr(idx_ret.loc[common])), 4)
 
-    # 近90日振幅序列
+    # 近90日振幅序列（走势图用）
     recent90 = df.tail(90)[["amplitude"]].copy()
     recent90.index = recent90.index.strftime("%m-%d")
     data["dates_90"] = recent90.index.tolist()
     data["amp_90"] = [round(float(v) * 100, 2) for v in recent90["amplitude"].tolist()]
+
+    # 全部振幅数据（分布图用）
+    data["amp_full"] = [round(float(v) * 100, 2) for v in amp.tolist()]
 
     # 年度振幅
     df2["year"] = df2.index.year
@@ -549,6 +552,7 @@ def build_html(data, comparison=None):
     # JS数据
     dates_90_js = json.dumps([d[-5:] for d in c["dates_90"]])
     amp_90_js = json.dumps(c["amp_90"])
+    amp_full_js = json.dumps(c.get("amp_full", c["amp_90"]))  # 全量振幅（分布图用）
     month_labels_js = json.dumps([str(i)+"月" for i in range(1, 13)])
     month_data_js = json.dumps(c["monthly_list"])
     monthly = c["monthly_list"]
@@ -611,7 +615,7 @@ def build_html(data, comparison=None):
         c.get("amp_ma_5_last", "-"), c.get("amp_ma_10_last", "-"), c.get("amp_ma_60_last", "-"),
         compare_html,
         c["date_end"],
-        dates_90_js, amp_90_js,
+        dates_90_js, amp_90_js, amp_full_js,
         primary, primary,
         month_labels_js, month_data_js, month_bg_js,
         month_ret_labels_js, month_ret_data_js, month_ret_bg_js,
@@ -829,10 +833,11 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
 (function(){
 var dates=%s;
 var amp=%s;
+var ampFull=%s;
 function ma(arr,w){var o=[];for(var i=0;i<arr.length;i++){if(i<w-1){o.push(null);continue}var s=0;for(var j=i-w+1;j<=i;j++)s+=arr[j];o.push(s/w)}return o}
 var ma20=ma(amp,20);
 
-new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%%","1-1.5%%","1.5-2%%","2-2.5%%","2.5-3%%","3-3.5%%","3.5-4%%","4-5%%","5-6%%","6-8%%",">8%%"],datasets:[{label:"天数",data:[amp.filter(function(v){return v<1}).length,amp.filter(function(v){return v>=1&&v<1.5}).length,amp.filter(function(v){return v>=1.5&&v<2}).length,amp.filter(function(v){return v>=2&&v<2.5}).length,amp.filter(function(v){return v>=2.5&&v<3}).length,amp.filter(function(v){return v>=3&&v<3.5}).length,amp.filter(function(v){return v>=3.5&&v<4}).length,amp.filter(function(v){return v>=4&&v<5}).length,amp.filter(function(v){return v>=5&&v<6}).length,amp.filter(function(v){return v>=6&&v<8}).length,amp.filter(function(v){return v>=8}).length],backgroundColor:"%s",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"日振幅分布",display:true,font:{size:13}}}}});
+new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%%","1-1.5%%","1.5-2%%","2-2.5%%","2.5-3%%","3-3.5%%","3.5-4%%","4-5%%","5-6%%","6-8%%",">8%%"],datasets:[{label:"天数",data:[ampFull.filter(function(v){return v<1}).length,ampFull.filter(function(v){return v>=1&&v<1.5}).length,ampFull.filter(function(v){return v>=1.5&&v<2}).length,ampFull.filter(function(v){return v>=2&&v<2.5}).length,ampFull.filter(function(v){return v>=2.5&&v<3}).length,ampFull.filter(function(v){return v>=3&&v<3.5}).length,ampFull.filter(function(v){return v>=3.5&&v<4}).length,ampFull.filter(function(v){return v>=4&&v<5}).length,ampFull.filter(function(v){return v>=5&&v<6}).length,ampFull.filter(function(v){return v>=6&&v<8}).length,ampFull.filter(function(v){return v>=8}).length],backgroundColor:"%s",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"日振幅分布 (" + ampFull.length + "天)",display:true,font:{size:13}}}}});
 
 new Chart(document.getElementById("ts90"),{type:"line",data:{labels:dates,datasets:[{label:"日振幅 (%%)",data:amp,borderColor:"%s",borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:"20日均线",data:ma20,borderColor:"#dc2626",borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"近90日振幅走势",display:true,font:{size:13}}}}});
 
