@@ -64,6 +64,11 @@ STOCKS = {
         "industry": "轮胎",
         "market_index": "sh000001",
     },
+    "00700": {
+        "name": "腾讯控股",
+        "industry": "互联网",
+        "market_index": "HSI",
+    },
 }
 
 # ---- 数据日期范围 ----
