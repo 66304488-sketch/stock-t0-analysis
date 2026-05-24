@@ -194,12 +194,50 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
       <strong>🟡 最新信号状态（2026-05-22）：</strong><span style="color:#d97706;font-weight:700">谨慎观望</span>
       （综合评分 0.554，信号 未触发）
       <span style="font-size:0.8rem;color:#64748b">← 基于最近交易日数据，判断下一日是否适合做T</span></li>
+      <li><strong>具体操作价格（基准：昨日收盘价 7.18）：</strong>
+        <table style="width:100%;margin:8px 0;border-collapse:collapse;font-size:0.9rem">
+        <tr style="background:#1a56db20">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">策略</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">入场</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止盈</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止损</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">胜率</td>
+        </tr>
+        <tr style="background:#05966908">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">保守 <span style="font-size:0.75rem;color:#64748b">(推荐)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#059669">6.96 <span style="font-size:0.75rem;color:#64748b">(-3.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">7.03 <span style="font-size:0.75rem;color:#64748b">(+1.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">6.93 <span style="font-size:0.75rem;color:#64748b">(-0.5%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">100.0%</td>
+        </tr>
+        <tr style="background:#d9770608">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">激进</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#d97706">7.04 <span style="font-size:0.75rem;color:#64748b">(-2.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">7.22 <span style="font-size:0.75rem;color:#64748b">(+2.5%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">6.93</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">100.0%</td>
+        </tr>
+        </table>
+        <span style="font-size:0.75rem;color:#64748b">例：正T — 挂单 6.96 买入，成交后挂 7.03 卖出；若跌破 6.93 止损离场。反T方向相反。</span></li>
+      <li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#f1f5f9;border-left:3px solid #64748b">
+      <strong>开盘涨跌对入场的影响：</strong>
+      <table style="width:100%%;margin:4px 0;border-collapse:collapse;font-size:0.85rem">
+      <tr><td style="padding:4px 8px">开盘<span style="color:#dc2626;font-weight:600">高开 &gt;1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">不宜追高做正T，等待回落至入场价再执行；可优先反T</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">高开 0.5~1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价上移0.5%%，止盈目标不变</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#0891b2;font-weight:600">平开 ±0.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">正常按上表挂单操作，参照昨收价</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">低开 0.5~1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价下移0.5%%，可适当加大仓位；止盈可放宽0.2%%</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#059669;font-weight:600">低开 &gt;1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">优先正T！以开盘价替代昨收价重新计算入场区间，仓位可加至40%%</td></tr>
+      </table>
+      <span style="font-size:0.75rem;color:#64748b">核心原则：入场价基于「昨收」为基准计算，开盘偏离超过0.5%%时需微调。原则是「跌多了买，涨多了卖」，不与趋势对抗。</span></li>
       <li><strong>方向选择：</strong>优先<span style='color:#dc2626'>反T（先卖后买）</span>，下行趋势中反向操作更安全</li>
-      <li><strong>入场时机：</strong>最佳月份：<strong>10月</strong>，最佳交易日：<strong>周一</strong></li>
-      <li><strong>止盈/止损参考：</strong>止盈 +3.1%（基于P75振幅），止损 -1.2%（日内硬止损）</li>
-      <li><strong>最佳参数（历史回测）：</strong>入场阈值 -0.03，出场阈值 +0.01（胜率100.0%）</li>
+      <li><strong>季节时机：</strong>最佳月份：<strong>10月</strong>，最佳交易日：<strong>周一</strong></li>
       <li><strong>风险提示：</strong>股价长期下行，正T容易被套</li>
-      <li><strong>仓位建议：</strong>底仓的30%用于做T，单日最多2次操作。</li>
+      <li><strong>仓位建议：</strong>底仓的30%用于做T（低开可加至40%），单日最多2次操作。</li>
     </ul>
   </div>
 </div>
