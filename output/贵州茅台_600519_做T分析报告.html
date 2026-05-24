@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>贵州茅台(600519) 做T分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.6;-webkit-text-size-adjust:100%}
+.header{background:linear-gradient(135deg,#1a0a2e,#3b1f6e,#7c3aed);color:#fff;padding:32px 16px 24px;text-align:center}
+.header .code{font-size:0.85rem;opacity:0.7;letter-spacing:2px}
+.header h1{font-size:1.5rem;font-weight:800;margin:6px 0}
+.header .meta{font-size:0.8rem;opacity:0.7;margin-top:8px}
+.header .meta span{margin:0 6px}
+.container{max-width:640px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.card h2{font-size:1.05rem;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:6px}
+.card h2 .icon{font-size:1.2rem}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:#f8fafc;border-radius:8px;padding:12px;text-align:center;border:1px solid #e2e8f0}
+.kpi .label{font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.3px}
+.kpi .value{font-size:1.35rem;font-weight:800;color:#1e293b;margin:2px 0}
+.kpi .sub{font-size:0.72rem;color:#64748b}
+.kpi.warn .value{color:#d97706}
+.kpi.good .value{color:#059669}
+.kpi.bad .value{color:#dc2626}
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.data-table tr:last-child td{border-bottom:none}
+.data-table .lbl{color:#64748b;white-space:nowrap;width:40%;font-weight:500}
+.data-table .val{font-weight:600;text-align:right}
+.data-table .hi{color:#059669}
+.data-table .lo{color:#dc2626}
+.chart-wrap{position:relative;width:100%}
+.chart-200{height:200px}
+.chart-240{height:240px}
+.chart-280{height:280px}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-yellow{background:#fef3c7;color:#92400e}
+.tag-red{background:#fee2e2;color:#991b1b}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.section-title{font-size:0.9rem;font-weight:700;color:#475569;margin:14px 0 8px;padding-left:4px;border-left:3px solid #7c3aed}
+.score-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.score-bar .name{font-size:0.75rem;width:56px;text-align:right;color:#64748b;flex-shrink:0}
+.score-bar .track{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.score-bar .fill{height:100%;border-radius:4px;transition:width 0.3s}
+.score-bar .num{font-size:0.75rem;font-weight:700;width:36px;flex-shrink:0}
+.bt-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;gap:8px;font-size:0.78rem}
+.bt-row .bt-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;flex-shrink:0}
+.bt-row .bt-params{flex:1;font-weight:600}
+.bt-row .bt-metrics{text-align:right}
+.bt-row .bt-metrics div{line-height:1.3}
+.strategy{background:linear-gradient(135deg,#fef3c7,#fef9c3);border:1px solid #fcd34d;border-radius:10px;padding:14px}
+.strategy h3{font-size:0.95rem;font-weight:700;color:#92400e;margin-bottom:8px}
+.strategy li{font-size:0.82rem;margin-bottom:6px;padding-left:4px;line-height:1.5;list-style-position:inside}
+.warn-tag{display:inline-block;background:#f59e0b;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
+footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
+@media(min-width:480px){
+  .kpi-grid{grid-template-columns:repeat(3,1fr)}
+  .header h1{font-size:1.8rem}
+  .data-table{font-size:0.85rem}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="code">SH.600519 · 白酒 · 上证指数</div>
+  <h1>贵州茅台 做T分析报告</h1>
+  <div class="meta"><span>2021-04-06 ~ 2026-05-22</span><span>1242 个交易日</span><span>数据: AKShare 新浪 + 同花顺板块</span></div>
+</div>
+
+<div class="container">
+
+<div class="card">
+  <h2><span class="icon">&#x1F4CA;</span> 核心指标</h2>
+  <div class="kpi-grid">
+    <div class="kpi bad"><div class="label">日均振幅</div><div class="value">2.04%</div><div class="sub">中位数 1.76%</div></div>
+    <div class="kpi bad"><div class="label">近30日均值</div><div class="value">1.27%</div><div class="sub">最高 3.23% / 最低 0.66%</div></div>
+    <div class="kpi good"><div class="label">特质波动占比</div><div class="value">71.4%</div><div class="sub">R²_mkt = 0.286</div></div>
+    <div class="kpi good"><div class="label">波动聚集度</div><div class="value">0.953</div><div class="sub">GARCH α+β</div></div>
+    <div class="kpi warn"><div class="label">做T综合评分</div><div class="value">0.583</div><div class="sub">昨日: 0.806 (信号开)</div></div>
+    <div class="kpi bad"><div class="label">信号触发率</div><div class="value">46.1%</div><div class="sub">572 / 1242 天</div></div>
+  </div>
+  <div style="margin-top:10px;padding:10px;background:#fef3c7;border-radius:8px;font-size:0.82rem">
+    <strong>&#x26A0;&#xFE0F; 结论：</strong>贵州茅台不适合做T。振幅均值仅 2.04%，中位数 1.76%，扣除双边成本 0.3% 后利润空间有限。近30日振幅更是降至 1.27%，做T性价比极低。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4C8;</span> 振幅分布</h2>
+  <div class="chart-wrap chart-280"><canvas id="ampDist"></canvas></div>
+  <div class="section-title">分位数详情</div>
+  <table class="data-table">
+    <tr><td class="lbl">最小值</td><td class="val">0.41%</td><td class="lbl">P10</td><td class="val">0.94%</td></tr>
+    <tr><td class="lbl">P25</td><td class="val">1.24%</td><td class="lbl">P50 (中位数)</td><td class="val">1.76%</td></tr>
+    <tr><td class="lbl">P75</td><td class="val">2.50%</td><td class="lbl">P90</td><td class="val">3.40%</td></tr>
+    <tr><td class="lbl">P95</td><td class="val">4.20%</td><td class="lbl">P99</td><td class="val">6.23%</td></tr>
+    <tr><td class="lbl">最大值</td><td class="val">13.15%</td><td class="lbl">标准差</td><td class="val">1.19%</td></tr>
+    <tr><td class="lbl">偏度 (Skew)</td><td class="val">2.38</td><td class="lbl">峰度 (Kurt)</td><td class="val lo">10.96</td></tr>
+  </table>
+  <div class="section-title">分布特征</div>
+  <table class="data-table">
+    <tr><td class="lbl">最优拟合分布</td><td class="val">对数正态 (Lognormal)</td><td class="lbl">峰度异常高</td><td class="val lo">10.96 (极厚尾)</td></tr>
+    <tr><td class="lbl">高振幅日 (&gt;P90)</td><td class="val">125 天 (10.1%)</td><td class="lbl">极端振幅日 (&gt;5%)</td><td class="val lo">33 天 (2.7%)</td></tr>
+    <tr><td class="lbl">最长连续高振幅</td><td class="val">7 天</td><td class="lbl">平均连续高振幅</td><td class="val">1.3 天</td></tr>
+  </table>
+  <div style="margin-top:8px;padding:8px;background:#dbeafe;border-radius:8px;font-size:0.78rem">
+    峰度 10.96 是四只股票中最高，说明振幅分布极度集中（多数日子在1~2%），偶尔爆发极端振幅（如2026-01-29的8.76%），但极端事件太少难以形成稳定做T策略。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4C9;</span> 近90日振幅走势</h2>
+  <div class="chart-wrap chart-280"><canvas id="ts90"></canvas></div>
+  <div style="margin-top:4px;font-size:0.78rem;color:#64748b;text-align:center">
+    大部分日子的振幅在 0.6%~2.0% 之间，近期持续低迷
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4C5;</span> 季节性分析</h2>
+  <div class="chart-wrap chart-280"><canvas id="monthChart"></canvas></div>
+  <div class="section-title">月度振幅</div>
+  <table class="data-table">
+    <tr><td class="lbl">最佳月份</td><td class="val hi">10月 (2.60%)</td><td class="lbl">最差月份</td><td class="val lo">5月 (1.77%)</td></tr>
+  </table>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+    <div>1月: 2.01%</div><div>2月: 2.26%</div><div>3月: 1.93%</div><div>4月: 1.85%</div>
+    <div>5月: 1.77%</div><div>6月: 2.03%</div><div>7月: 1.98%</div><div>8月: 2.03%</div>
+    <div>9月: 2.26%</div><div>10月: 2.60%</div><div>11月: 2.13%</div><div>12月: 1.86%</div>
+  </div>
+  <div class="section-title">季度振幅</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem">
+    <div>Q1: 2.05%</div><div>Q2: 1.88%</div><div>Q3: 2.08%</div><div>Q4: 2.16%</div>
+  </div>
+  <div class="section-title">周内效应</div>
+  <div class="chart-wrap chart-240"><canvas id="dowChart"></canvas></div>
+  <table class="data-table">
+    <tr><td class="lbl">最佳交易日</td><td class="val hi">周一 (2.11%)</td><td class="lbl">最差交易日</td><td class="val lo">周三 (1.89%)</td></tr>
+  </table>
+  <div style="font-size:0.78rem;margin-top:4px;color:#64748b">
+    周二 2.10% · 周四 2.03% · 周五 2.06%<br>
+    周内差距仅 0.22%，分布非常均匀。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4E6;</span> GARCH(1,1) 波动率建模</h2>
+  <table class="data-table">
+    <tr><td class="lbl">omega (常数)</td><td class="val">0.0620</td><td class="lbl">alpha (ARCH)</td><td class="val">0.0936</td></tr>
+    <tr><td class="lbl">beta (GARCH)</td><td class="val">0.8590</td><td class="lbl">persistence (α+β)</td><td class="val hi">0.9527</td></tr>
+  </table>
+  <div style="margin-top:8px;padding:10px;background:#dbeafe;border-radius:8px;font-size:0.82rem">
+    <strong>解读：</strong>Persistence = 0.95，强波动聚集。但问题是茅台振幅绝对值太低——即使聚集，高波动日也只是从1.5%跳到2.5%，做T空间仍然有限。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F504;</span> 波动率分解</h2>
+  <table class="data-table">
+    <tr><td class="lbl">市场联动 R²</td><td class="val">0.2861</td><td class="lbl">特质波动占比</td><td class="val hi">0.7139</td></tr>
+    <tr><td class="lbl">60日Beta均值</td><td class="val">0.8848</td><td class="lbl">最新Beta</td><td class="val">0.2269</td></tr>
+    <tr><td class="lbl">残余波动均值</td><td class="val">1.32%</td><td class="lbl">最新残余波动</td><td class="val">1.23%</td></tr>
+    <tr><td class="lbl">大盘相关性</td><td class="val">0.522</td><td class="lbl">白酒板块相关性</td><td class="val">0.618</td></tr>
+  </table>
+  <div style="margin-top:8px;padding:10px;background:#dbeafe;border-radius:8px;font-size:0.82rem">
+    <strong>解读：</strong>71.4% 的特质占比不低，但<strong>振幅绝对值太小</strong>是关键限制。<br>
+    残余波动仅 1.32%，意味着扣掉市场影响后，独立日内波动空间只有约 1.3%。<br>
+    与白酒板块相关性 0.62 最高，说明受行业联动影响大于市场。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F3AF;</span> 做T信号系统</h2>
+  <div class="section-title">综合评分 (昨日)</div>
+  <table class="data-table">
+    <tr><td class="lbl">综合做T评分</td><td class="val" style="font-size:1.1rem;color:#059669">0.8061</td><td class="lbl">信号状态</td><td class="val"><span class="tag tag-green">强信号 &#x2705;</span></td></tr>
+    <tr><td class="lbl">历史评分均值</td><td class="val lo">0.5833</td><td class="lbl">信号触发率</td><td class="val lo">46.05% (572天)</td></tr>
+  </table>
+  <div class="section-title">分项评分 (昨日)</div>
+  <div class="score-bar"><span class="name">振幅</span><div class="track"><div class="fill" style="width:71.8%;background:#7c3aed"></div></div><span class="num">0.718</span></div>
+  <div class="score-bar"><span class="name">流动性</span><div class="track"><div class="fill" style="width:68.7%;background:#7c3aed"></div></div><span class="num">0.687</span></div>
+  <div class="score-bar"><span class="name">特质</span><div class="track"><div class="fill" style="width:96.7%;background:#7c3aed"></div></div><span class="num">0.967</span></div>
+  <div class="score-bar"><span class="name">市态</span><div class="track"><div class="fill" style="width:93.1%;background:#7c3aed"></div></div><span class="num">0.931</span></div>
+  <div class="section-title">分项历史均值</div>
+  <table class="data-table">
+    <tr><td class="lbl">振幅评分</td><td class="val lo">0.459</td><td class="lbl">流动性评分</td><td class="val">0.591</td></tr>
+    <tr><td class="lbl">特质评分</td><td class="val hi">0.714</td><td class="lbl">市态评分</td><td class="val">0.685</td></tr>
+  </table>
+  <div style="margin-top:8px;font-size:0.78rem;color:#64748b">
+    权重: 振幅40% + 流动性20% + 特质25% + 市态15% · 阈值: 0.60<br>
+    振幅评分是最大拖累（均值仅 0.459），这是信号触发率低的核心原因。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4B0;</span> 回测结果 <span class="warn-tag">交易机会极少</span></h2>
+  <div style="font-size:0.8rem;color:#64748b;margin-bottom:8px">
+    逻辑：开盘价×(1+入场阈值)买入，开盘价×(1+出场阈值)卖出，需在日内高低点范围内。<br>
+    仅统计信号日(信号=1)交易。
+  </div>
+  <div class="bt-row" style="font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">
+    <div class="bt-rank" style="background:transparent;color:#64748b">#</div>
+    <div class="bt-params">参数</div>
+    <div class="bt-metrics"><div>胜率 / 均利 / 次数</div></div>
+  </div>
+  <div class="bt-row">
+    <div class="bt-rank" style="background:#f59e0b">1</div>
+    <div class="bt-params">入场 -3.0% 出场 +1.0%</div>
+    <div class="bt-metrics"><div style="color:#059669;font-weight:700">100%</div><div>均利 3.82% × 仅2次 = +7.6%</div></div>
+  </div>
+  <div class="bt-row">
+    <div class="bt-rank" style="background:#94a3b8">2</div>
+    <div class="bt-params">入场 -2.0% 出场 +2.5%</div>
+    <div class="bt-metrics"><div style="color:#059669;font-weight:700">100%</div><div>均利 4.28% × 仅3次 = +12.9%</div></div>
+  </div>
+  <div class="bt-row">
+    <div class="bt-rank" style="background:#b45309">3</div>
+    <div class="bt-params">入场 -1.0% 出场 +2.5%</div>
+    <div class="bt-metrics"><div style="color:#059669;font-weight:700">100%</div><div>均利 3.23% × 16次 = +51.7%</div></div>
+  </div>
+  <div class="bt-row">
+    <div class="bt-rank" style="background:#64748b">4</div>
+    <div class="bt-params">入场 -1.0% 出场 +2.0%</div>
+    <div class="bt-metrics"><div style="color:#059669;font-weight:700">100%</div><div>均利 2.73% × 27次 = +73.6%</div></div>
+  </div>
+  <div class="bt-row">
+    <div class="bt-rank" style="background:#64748b">5</div>
+    <div class="bt-params">入场 -1.0% 出场 +1.5%</div>
+    <div class="bt-metrics"><div style="color:#059669;font-weight:700">100%</div><div>均利 2.22% × 39次 = +86.6%</div></div>
+  </div>
+  <div style="margin-top:8px;padding:10px;background:#fee2e2;border-radius:8px;font-size:0.78rem">
+    <strong>&#x26A0;&#xFE0F; 警告：</strong>最优参数组合仅 39 次交易机会（5年！），对比陕西煤业的 192 次、紫金矿业的 151 次。<br>
+    茅台做T机会极其稀少，信号触发率 46% 但实际能成交的天数远低于此。
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4A1;</span> 做T策略建议</h2>
+  <div class="strategy">
+    <h3>贵州茅台 做T可行性评估 — 不推荐</h3>
+    <ul>
+      <li><strong>总体结论：</strong>茅台不适合日内做T。振幅太小、机会太少、性价比低。</li>
+      <li><strong>原因1 — 振幅不足：</strong>日均振幅仅 2.04%，中位数 1.76%。扣除双边 0.3% 成本后，净利润空间约1~2%。</li>
+      <li><strong>原因2 — 单价过高：</strong>最新收盘价 1290 元/股，1手=100股=12.9万元。底仓30%做T需要至少40万资金。</li>
+      <li><strong>原因3 — 机会太少：</strong>5年仅39次符合信号条件的做T机会（入场-1%/出场+1.5%）。</li>
+      <li><strong>原因4 — 下行趋势：</strong>区间跌幅 -30.77%，股价从高点持续回落，正T风险大。</li>
+      <li><strong>如果一定要做：</strong>只在10月（振幅最大2.60%）和极端事件日（振幅跳升至5%+）关注，入场-1.0%/出场+1.5%，但不要期望稳定收益。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4B5;</span> 量价参考</h2>
+  <table class="data-table">
+    <tr><td class="lbl">最新收盘价</td><td class="val">1,290.20 元</td><td class="lbl">历史均价</td><td class="val">1,548.00 元</td></tr>
+    <tr><td class="lbl">区间涨跌幅</td><td class="val lo">-30.77%</td><td class="lbl">日均涨跌幅</td><td class="val lo">-0.016%</td></tr>
+    <tr><td class="lbl">日收益波动率</td><td class="val">1.66%</td><td class="lbl">日均成交额</td><td class="val">55.2 亿</td></tr>
+    <tr><td class="lbl">最新成交额</td><td class="val">63.7 亿</td><td class="lbl">最新振幅MA20</td><td class="val">1.32%</td></tr>
+    <tr><td class="lbl">MA5</td><td class="val">1.34%</td><td class="lbl">MA10</td><td class="val">1.35%</td></tr>
+    <tr><td class="lbl">MA60</td><td class="val">1.52%</td><td class="lbl"></td><td class="val"></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4CA;</span> 四股横向对比</h2>
+  <div style="overflow-x:auto">
+  <table class="data-table">
+    <tr><td class="lbl">指标</td><td class="val" style="color:#1a56db">三一重工</td><td class="val" style="color:#dc2626">紫金矿业</td><td class="val" style="color:#059669">陕西煤业</td><td class="val" style="color:#7c3aed">贵州茅台</td></tr>
+    <tr><td class="lbl">日均振幅</td><td class="val">2.75%</td><td class="val">2.99%</td><td class="val hi">3.21%</td><td class="val lo">2.04%</td></tr>
+    <tr><td class="lbl">特质波动占比</td><td class="val lo">64.0%</td><td class="val">71.7%</td><td class="val hi">87.4%</td><td class="val">71.4%</td></tr>
+    <tr><td class="lbl">信号触发率</td><td class="val">54.1%</td><td class="val">57.9%</td><td class="val hi">62.0%</td><td class="val lo">46.1%</td></tr>
+    <tr><td class="lbl">综合评分</td><td class="val">0.605</td><td class="val">0.635</td><td class="val hi">0.660</td><td class="val lo">0.583</td></tr>
+    <tr><td class="lbl">回测交易次数</td><td class="val">93次</td><td class="val">151次</td><td class="val hi">192次</td><td class="val lo">39次</td></tr>
+  </table>
+  </div>
+</div>
+
+</div>
+<footer>A股个股波动做T套利分析系统 · 数据截止 2026-05-22 · 仅供参考不构成投资建议</footer>
+
+<script>
+(function(){
+var dates=["01/05","01/06","01/07","01/08","01/09","01/12","01/13","01/14","01/15","01/16","01/19","01/20","01/21","01/22","01/23","01/26","01/27","01/28","01/29","01/30","02/02","02/03","02/04","02/05","02/06","02/09","02/10","02/11","02/12","02/13","02/24","02/25","02/26","02/27","03/02","03/03","03/04","03/05","03/06","03/09","03/10","03/11","03/12","03/13","03/16","03/17","03/18","03/19","03/20","03/23","03/24","03/25","03/26","03/27","03/30","03/31","04/01","04/02","04/03","04/07","04/08","04/09","04/10","04/13","04/14","04/15","04/16","04/17","04/20","04/21","04/22","04/23","04/24","04/27","04/28","04/29","04/30","05/06","05/07","05/08","05/11","05/12","05/13","05/14","05/15","05/18","05/19","05/20","05/21","05/22"];
+var amp=[3.4,1.43,1.04,1.07,0.89,0.98,1.44,1.85,1.02,1.26,0.9,0.69,1.78,1.8,1.16,2.23,1.17,1.84,8.76,2.36,3.35,2.37,4.02,3.28,3.99,1.94,1.87,1.2,1.96,2.5,4.09,2.85,1.66,1.45,1.4,2.13,2.17,1.28,1.39,1.55,0.82,0.57,0.92,1.84,3.25,2.53,2.25,1.84,1.62,2.42,1.24,1.2,0.96,2.09,2.01,2.22,1.18,0.88,1.02,2.39,1.18,1.2,1.27,0.93,0.94,1.99,1.19,1.44,0.99,0.7,0.99,1.04,3.23,1.22,0.66,0.67,1.51,1.37,1.31,0.93,0.87,0.96,1.52,2.52,0.91,1.73,0.91,1.43,0.95,1.66];
+function ma(arr,w){var o=[];for(var i=0;i<arr.length;i++){if(i<w-1){o.push(null);continue}var s=0;for(var j=i-w+1;j<=i;j++)s+=arr[j];o.push(s/w)}return o}
+var ma20=ma(amp,20);
+
+new Chart(document.getElementById('ampDist'),{type:'bar',data:{labels:['<0.8%','0.8-1.2%','1.2-1.6%','1.6-2%','2-2.5%','2.5-3%','3-3.5%','3.5-4.5%','4.5-6%','6-8%','>8%'],datasets:[{label:'天数',data:[amp.filter(function(v){return v<0.8}).length,amp.filter(function(v){return v>=0.8&&v<1.2}).length,amp.filter(function(v){return v>=1.2&&v<1.6}).length,amp.filter(function(v){return v>=1.6&&v<2}).length,amp.filter(function(v){return v>=2&&v<2.5}).length,amp.filter(function(v){return v>=2.5&&v<3}).length,amp.filter(function(v){return v>=3&&v<3.5}).length,amp.filter(function(v){return v>=3.5&&v<4.5}).length,amp.filter(function(v){return v>=4.5&&v<6}).length,amp.filter(function(v){return v>=6&&v<8}).length,amp.filter(function(v){return v>=8}).length],backgroundColor:'rgba(124,58,237,0.75)',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:'日振幅分布 (90天)',display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById('ts90'),{type:'line',data:{labels:dates,datasets:[{label:'日振幅 (%)',data:amp,borderColor:'#7c3aed',borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:'20日均线',data:ma20,borderColor:'#dc2626',borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:'近90日振幅走势',display:true,font:{size:13}}},scales:{y:{title:{display:true,text:'%'}}}}});
+
+new Chart(document.getElementById('monthChart'),{type:'bar',data:{labels:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'],datasets:[{label:'月均振幅 (%)',data:[2.01,2.26,1.93,1.85,1.77,2.03,1.98,2.03,2.26,2.60,2.13,1.86],backgroundColor:['rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(220,38,38,0.75)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)','rgba(5,150,105,0.85)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:'月度振幅分布',display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById('dowChart'),{type:'bar',data:{labels:['周一','周二','周三','周四','周五'],datasets:[{label:'日均振幅 (%)',data:[2.11,2.10,1.89,2.03,2.06],backgroundColor:['rgba(5,150,105,0.85)','rgba(124,58,237,0.6)','rgba(220,38,38,0.85)','rgba(124,58,237,0.6)','rgba(124,58,237,0.6)'],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:'周内振幅分布',display:true,font:{size:13}}}}});
+})();
+</script>
+</body>
+</html>

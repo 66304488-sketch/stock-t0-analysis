@@ -1,0 +1,77 @@
+{
+  "daily__600031__20210101__20260522": {
+    "filepath": "data/raw/daily_600031_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T16:18:34.244733",
+    "rows": 1302
+  },
+  "index__sh000001__20210101__20260522": {
+    "filepath": "data/raw/index_sh000001_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T16:18:34.477642",
+    "rows": 1302
+  },
+  "industry__工程机械__20210101__20260522": {
+    "filepath": "data/raw/industry_工程机械_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T16:18:35.933519",
+    "rows": 732
+  },
+  "daily__600031__20210101__20251231": {
+    "filepath": "data/raw/daily_600031_20210101_20251231.parquet",
+    "fetch_time": "2026-05-23T16:44:57.406796",
+    "rows": 1212
+  },
+  "index__sh000001__20210101__20251231": {
+    "filepath": "data/raw/index_sh000001_20210101_20251231.parquet",
+    "fetch_time": "2026-05-23T16:44:57.734557",
+    "rows": 1212
+  },
+  "industry__工程机械__20210101__20251231": {
+    "filepath": "data/raw/industry_工程机械_20210101_20251231.parquet",
+    "fetch_time": "2026-05-23T16:44:59.955655",
+    "rows": 732
+  },
+  "daily__601899__20210101__20260522": {
+    "filepath": "data/raw/daily_601899_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T17:37:02.370068",
+    "rows": 1302
+  },
+  "industry__贵金属__20210101__20260522": {
+    "filepath": "data/raw/industry_贵金属_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T17:39:38.365492",
+    "rows": 732
+  },
+  "daily__601225__20210101__20260522": {
+    "filepath": "data/raw/daily_601225_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T17:57:45.081945",
+    "rows": 1302
+  },
+  "daily__600519__20210101__20260522": {
+    "filepath": "data/raw/daily_600519_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T22:51:40.060054",
+    "rows": 1302
+  },
+  "industry__白酒__20210101__20260522": {
+    "filepath": "data/raw/industry_白酒_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T22:51:42.419613",
+    "rows": 732
+  },
+  "daily__300750__20210101__20260522": {
+    "filepath": "data/raw/daily_300750_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T22:59:01.518714",
+    "rows": 1302
+  },
+  "index__sz399006__20210101__20260522": {
+    "filepath": "data/raw/index_sz399006_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T22:59:01.758368",
+    "rows": 1302
+  },
+  "industry__电池__20210101__20260522": {
+    "filepath": "data/raw/industry_电池_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T22:59:03.605342",
+    "rows": 732
+  },
+  "daily__513050__20210101__20260522": {
+    "filepath": "data/raw/daily_513050_20210101_20260522.parquet",
+    "fetch_time": "2026-05-23T23:12:54.404043",
+    "rows": 1302
+  }
+}
