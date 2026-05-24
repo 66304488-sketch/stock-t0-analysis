@@ -64,6 +64,11 @@ STOCKS = {
         "industry": "轮胎",
         "market_index": "sh000001",
     },
+    "002281": {
+        "name": "光迅科技",
+        "industry": "光通信",
+        "market_index": "sz399001",
+    },
     "00700": {
         "name": "腾讯控股",
         "industry": "互联网",

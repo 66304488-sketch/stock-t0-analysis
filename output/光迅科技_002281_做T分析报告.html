@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>光迅科技(002281) · 做T分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.6;-webkit-text-size-adjust:100%}
+.header{background:linear-gradient(135deg,#0f172a,#1e3a5f,#1a56db);color:#fff;padding:32px 16px 24px;text-align:center}
+.header .code{font-size:0.85rem;opacity:0.7;letter-spacing:2px}
+.header h1{font-size:1.5rem;font-weight:800;margin:6px 0}
+.header .meta{font-size:0.8rem;opacity:0.7;margin-top:8px}
+.header .meta span{margin:0 6px}
+.container{max-width:640px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.card h2{font-size:1.05rem;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:6px}
+.card h2 .icon{font-size:1.2rem}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:#f8fafc;border-radius:8px;padding:12px;text-align:center;border:1px solid #e2e8f0}
+.kpi .label{font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.3px}
+.kpi .value{font-size:1.35rem;font-weight:800;color:#1e293b;margin:2px 0}
+.kpi .sub{font-size:0.72rem;color:#64748b}
+.kpi.warn .value{color:#d97706}
+.kpi.good .value{color:#059669}
+.kpi.bad .value{color:#dc2626}
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.data-table tr:last-child td{border-bottom:none}
+.data-table .lbl{color:#64748b;white-space:nowrap;width:40%;font-weight:500}
+.data-table .val{font-weight:600;text-align:right}
+.data-table .hi{color:#059669}
+.data-table .lo{color:#dc2626}
+.chart-wrap{position:relative;width:100%}
+.chart-200{height:200px}
+.chart-240{height:240px}
+.chart-280{height:280px}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-yellow{background:#fef3c7;color:#92400e}
+.tag-red{background:#fee2e2;color:#991b1b}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.section-title{font-size:0.9rem;font-weight:700;color:#475569;margin:14px 0 8px;padding-left:4px;border-left:3px solid #1a56db}
+.score-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.score-bar .name{font-size:0.75rem;width:56px;text-align:right;color:#64748b;flex-shrink:0}
+.score-bar .track{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.score-bar .fill{height:100%;border-radius:4px;transition:width 0.3s}
+.score-bar .num{font-size:0.75rem;font-weight:700;width:36px;flex-shrink:0}
+.bt-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;gap:8px;font-size:0.78rem}
+.bt-row .bt-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;flex-shrink:0}
+.bt-row .bt-params{flex:1;font-weight:600}
+.bt-row .bt-metrics{text-align:right}
+.bt-row .bt-metrics div{line-height:1.3}
+.strategy{background:linear-gradient(135deg,#ecfdf5,#dbeafe);border:1px solid #a7f3d0;border-radius:10px;padding:14px}
+.strategy h3{font-size:0.95rem;font-weight:700;color:#065f46;margin-bottom:8px}
+.strategy li{font-size:0.82rem;margin-bottom:6px;padding-left:4px;line-height:1.5;list-style-position:inside}
+.best-tag{display:inline-block;background:#f59e0b;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
+.season-cell{border-bottom:1px dashed #e2e8f0;padding:6px 4px}
+footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
+@media(min-width:480px){
+.kpi-grid{grid-template-columns:repeat(3,1fr)}
+.header h1{font-size:1.8rem}
+.data-table{font-size:0.85rem}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="code">SZ.002281 · 光通信 · sz399001</div>
+<h1>光迅科技 做T分析报告</h1>
+<div class="meta"><span>2021-04-06 ~ 2026-05-22</span><span>1242 个交易日</span><span>数据: AKShare</span></div>
+</div>
+
+<div class="container">
+
+<div class="card">
+<h2><span class="icon">&#x1F4CA;</span> 核心指标</h2>
+<div class="kpi-grid">
+<div class="kpi good"><div class="label">日均振幅</div><div class="value">4.16%</div><div class="sub">中位数 3.51%</div></div>
+<div class="kpi"><div class="label">近30日振幅</div><div class="value">7.78%</div><div class="sub">最高 13.44% / 最低 2.29%</div></div>
+<div class="kpi "><div class="label">特质波动占比</div><div class="value">68.1%</div><div class="sub">R²_mkt = 0.3187</div></div>
+<div class="kpi"><div class="label">波动聚集度</div><div class="value">0.9117</div><div class="sub">GARCH α+β</div></div>
+<div class="kpi good"><div class="label">做T综合评分</div><div class="value">0.6178</div><div class="sub">昨日: 0.557 (关 ❌)</div></div>
+<div class="kpi"><div class="label">信号触发率</div><div class="value">57.97%</div><div class="sub">720 / 1242 天</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C8;</span> 振幅分布</h2>
+<div class="chart-wrap chart-280"><canvas id="ampDist"></canvas></div>
+<div class="section-title">分位数详情</div>
+<table class="data-table">
+<tr><td class="lbl">最小值</td><td class="val">0.87%</td><td class="lbl">P10</td><td class="val">1.78%</td></tr>
+<tr><td class="lbl">P25</td><td class="val">2.43%</td><td class="lbl">P50 (中位数)</td><td class="val">3.51%</td></tr>
+<tr><td class="lbl">P75</td><td class="val">5.28%</td><td class="lbl">P90</td><td class="val">7.48%</td></tr>
+<tr><td class="lbl">P95</td><td class="val">8.95%</td><td class="lbl">P99</td><td class="val">12.0%</td></tr>
+<tr><td class="lbl">最大值</td><td class="val">13.95%</td><td class="lbl">标准差</td><td class="val">2.36%</td></tr>
+<tr><td class="lbl">偏度 (Skew)</td><td class="val">1.28</td><td class="lbl">峰度 (Kurt)</td><td class="val">1.55</td></tr>
+</table>
+<div class="section-title">分布特征</div>
+<table class="data-table">
+<tr><td class="lbl">最优拟合分布</td><td class="val">对数正态 (Lognormal)</td><td class="lbl">极端振幅 (&gt;5%)</td><td class="val">27.54% (342天)</td></tr>
+<tr><td class="lbl">最长连续高振幅</td><td class="val">7 天</td><td class="lbl">平均连续高振幅</td><td class="val">1.6 天</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C9;</span> 近90日振幅走势</h2>
+<div class="chart-wrap chart-280"><canvas id="ts90"></canvas></div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C5;</span> 季节性分析</h2>
+<div class="chart-wrap chart-280"><canvas id="monthChart"></canvas></div>
+<div class="section-title">月度振幅</div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份</td><td class="val hi">2月</td><td class="lbl">最差月份</td><td class="val lo">11月</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+<div class="season-cell">1月: 3.95%</div><div class="season-cell">2月: 5.09%</div><div class="season-cell">3月: 4.89%</div><div class="season-cell">4月: 4.63%</div><div class="season-cell">5月: 4.33%</div><div class="season-cell">6月: 4.15%</div><div class="season-cell">7月: 3.6%</div><div class="season-cell">8月: 3.9%</div><div class="season-cell">9月: 4.14%</div><div class="season-cell">10月: 4.15%</div><div class="season-cell">11月: 3.49%</div><div class="season-cell">12月: 3.69%</div>
+</div>
+<div class="section-title">月度涨跌</div>
+<div class="chart-wrap chart-240"><canvas id="monthRetChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份(涨)</td><td class="val hi">2月</td><td class="lbl">最差月份(跌)</td><td class="val lo">1月</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+<div class="season-cell">1月: <span style="color:#dc2626">-0.33%</span> 胜率45.3%</div><div class="season-cell">2月: <span style="color:#059669">+1.07%</span> 胜率57.8%</div><div class="season-cell">3月: <span style="color:#059669">+0.22%</span> 胜率49.1%</div><div class="season-cell">4月: <span style="color:#059669">+0.19%</span> 胜率49.6%</div><div class="season-cell">5月: <span style="color:#059669">+0.58%</span> 胜率53.2%</div><div class="season-cell">6月: <span style="color:#059669">+0.73%</span> 胜率57.4%</div><div class="season-cell">7月: <span style="color:#dc2626">-0.07%</span> 胜率43.6%</div><div class="season-cell">8月: <span style="color:#dc2626">-0.06%</span> 胜率47.7%</div><div class="season-cell">9月: <span style="color:#059669">+0.11%</span> 胜率44.1%</div><div class="season-cell">10月: <span style="color:#059669">+0.25%</span> 胜率46.4%</div><div class="season-cell">11月: <span style="color:#059669">+-0.00%</span> 胜率48.6%</div><div class="season-cell">12月: <span style="color:#059669">+0.33%</span> 胜率50.5%</div>
+</div>
+<div class="section-title">季度振幅</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem">
+<div class="season-cell">Q1: 4.64%</div><div class="season-cell">Q2: 4.38%</div><div class="season-cell">Q3: 3.88%</div><div class="season-cell">Q4: 3.75%</div>
+</div>
+<div class="section-title">周内效应</div>
+<div class="chart-wrap chart-240"><canvas id="dowChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳交易日</td><td class="val hi">周一</td><td class="lbl">最差交易日</td><td class="val lo">周三</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4E6;</span> GARCH(1,1) 波动率建模</h2>
+<table class="data-table">
+<tr><td class="lbl">omega (常数)</td><td class="val">0.569619</td><td class="lbl">alpha (ARCH)</td><td class="val">0.2011</td></tr>
+<tr><td class="lbl">beta (GARCH)</td><td class="val">0.7106</td><td class="lbl">persistence (α+β)</td><td class="val">0.9117</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F504;</span> 波动率分解</h2>
+<table class="data-table">
+<tr><td class="lbl">市场联动 R²</td><td class="val">0.3187</td><td class="lbl">特质波动占比</td><td class="val">68.1%</td></tr>
+<tr><td class="lbl">60日Beta均值</td><td class="val">1.3269</td><td class="lbl">最新Beta</td><td class="val">1.2463</td></tr>
+<tr><td class="lbl">残余波动均值</td><td class="val">2.47%</td><td class="lbl">最新残余波动</td><td class="val">4.56%</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F3AF;</span> 做T信号系统</h2>
+<div class="section-title">综合评分 (昨日)</div>
+<table class="data-table">
+<tr><td class="lbl">综合做T评分</td><td class="val" style="font-size:1.1rem">0.557</td><td class="lbl">信号状态</td><td class="val"><span class="tag tag-red">关 ❌</span></td></tr>
+<tr><td class="lbl">历史评分均值</td><td class="val">0.6178</td><td class="lbl">信号触发率</td><td class="val">57.97% (720天)</td></tr>
+</table>
+<div class="section-title">分项评分 (昨日)</div>
+<div class="score-bar"><span class="name">振幅</span><div class="track"><div class="fill" style="width:47.6%;background:#1a56db"></div></div><span class="num">0.4762</span></div><div class="score-bar"><span class="name">流动性</span><div class="track"><div class="fill" style="width:61.2%;background:#1a56db"></div></div><span class="num">0.6118</span></div><div class="score-bar"><span class="name">特质</span><div class="track"><div class="fill" style="width:85.7%;background:#1a56db"></div></div><span class="num">0.8567</span></div><div class="score-bar"><span class="name">市态</span><div class="track"><div class="fill" style="width:20.0%;background:#1a56db"></div></div><span class="num">0.2</span></div>
+<div class="section-title">分项历史均值</div>
+<table class="data-table">
+<tr><td class="lbl">振幅评分</td><td class="val">0.5419</td></tr><tr><td class="lbl">流动性评分</td><td class="val">0.6364</td></tr><tr><td class="lbl">特质评分</td><td class="val">0.6813</td></tr><tr><td class="lbl">市态评分</td><td class="val">0.6898</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4B0;</span> 回测结果</h2>
+<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px">逻辑：开盘价×(1+入场阈值)买入，出场阈值卖出，需在日内高低点范围内。仅统计信号日。</div>
+<div class="bt-row" style="font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">
+<div class="bt-rank" style="background:transparent;color:#64748b">#</div><div class="bt-params">参数</div><div class="bt-metrics"><div>胜率 / 均利 / 次数</div></div>
+</div>
+<div class="bt-row"><div class="bt-rank" style="background:#f59e0b">1</div><div class="bt-params">入场 -0.03 出场 +0.01</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 3.82% x 83次 = 316.85%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#94a3b8">2</div><div class="bt-params">入场 -0.02 出场 +0.025</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 4.28% x 64次 = 274.24%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#b45309">3</div><div class="bt-params">入场 -0.01 出场 +0.025</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 3.23% x 132次 = 426.37%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#64748b">4</div><div class="bt-params">入场 -0.01 出场 +0.02</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 2.73% x 167次 = 455.2%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#64748b">5</div><div class="bt-params">入场 -0.01 出场 +0.015</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 2.22% x 210次 = 466.51%</div></div></div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4A1;</span> 做T策略建议</h2>
+  <div class="strategy">
+    <h3>光迅科技 做T可行性评估 - <span style="color:#0891b2">推荐</span></h3>
+    <ul>
+      <li><strong>历史统计评估：</strong><span style="color:#0891b2;font-weight:700">适合做T</span>。
+          日均振幅 4.16%，中位数 3.51%，特质占比 68.1%，历史信号率 57.97%，历史综合评分 0.6178。
+          <span style="font-size:0.8rem;color:#64748b">← 基于全部历史数据的统计结论</span></li>
+      <li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#d9770615;border-left:3px solid #d97706">
+      <strong>🟡 最新信号状态（2026-05-22）：</strong><span style="color:#d97706;font-weight:700">谨慎观望</span>
+      （综合评分 0.557，信号 未触发）
+      <span style="font-size:0.8rem;color:#64748b">← 基于最近交易日数据，判断下一日是否适合做T</span></li>
+      <li><strong>具体操作价格（基准：昨日收盘价 215.87）：</strong>
+        <table style="width:100%;margin:8px 0;border-collapse:collapse;font-size:0.9rem">
+        <tr style="background:#1a56db20">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">策略</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">入场</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止盈</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止损</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">胜率</td>
+        </tr>
+        <tr style="background:#05966908">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">保守 <span style="font-size:0.75rem;color:#64748b">(推荐)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#059669">209.39 <span style="font-size:0.75rem;color:#64748b">(-3.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">211.48 <span style="font-size:0.75rem;color:#64748b">(+1.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">208.34 <span style="font-size:0.75rem;color:#64748b">(-0.5%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">100.0%</td>
+        </tr>
+        <tr style="background:#d9770608">
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">激进</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#d97706">211.55 <span style="font-size:0.75rem;color:#64748b">(-2.0%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">216.84 <span style="font-size:0.75rem;color:#64748b">(+2.5%)</span></td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">208.34</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">100.0%</td>
+        </tr>
+        </table>
+        <span style="font-size:0.75rem;color:#64748b">例：正T — 挂单 209.39 买入，成交后挂 211.48 卖出；若跌破 208.34 止损离场。反T方向相反。</span></li>
+      <li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#f1f5f9;border-left:3px solid #64748b">
+      <strong>开盘涨跌对入场的影响：</strong>
+      <table style="width:100%%;margin:4px 0;border-collapse:collapse;font-size:0.85rem">
+      <tr><td style="padding:4px 8px">开盘<span style="color:#dc2626;font-weight:600">高开 &gt;1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">不宜追高做正T，等待回落至入场价再执行；可优先反T</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">高开 0.5~1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价上移0.5%%，止盈目标不变</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#0891b2;font-weight:600">平开 ±0.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">正常按上表挂单操作，参照昨收价</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">低开 0.5~1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价下移0.5%%，可适当加大仓位；止盈可放宽0.2%%</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#059669;font-weight:600">低开 &gt;1.5%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">优先正T！以开盘价替代昨收价重新计算入场区间，仓位可加至40%%</td></tr>
+      </table>
+      <span style="font-size:0.75rem;color:#64748b">核心原则：入场价基于「昨收」为基准计算，开盘偏离超过0.5%%时需微调。原则是「跌多了买，涨多了卖」，不与趋势对抗。</span></li>
+      <li><strong>方向选择：</strong>优先<span style='color:#059669'>正T（先买后卖）</span>，整体上升趋势，顺势而为</li>
+      <li><strong>季节时机：</strong>最佳月份：<strong>2月</strong>，最佳交易日：<strong>周一</strong></li>
+      
+      <li><strong>仓位建议：</strong>底仓的30%用于做T（低开可加至40%），单日最多2次操作。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4B5;</span> 量价参考</h2>
+<table class="data-table">
+<tr><td class="lbl">最新收盘价</td><td class="val">215.87 元</td><td class="lbl">历史均价</td><td class="val">36.78 元</td></tr>
+<tr><td class="lbl">区间涨跌幅</td><td class="val hi">+880.34%</td><td class="lbl">日均涨跌幅</td><td class="val">0.2389%</td></tr>
+<tr><td class="lbl">日收益波动率</td><td class="val">3.33%</td><td class="lbl">日均成交额</td><td class="val">14.6 亿</td></tr>
+<tr><td class="lbl">最新成交额</td><td class="val">145.9 亿</td><td class="lbl">最新振幅MA20</td><td class="val">8.63%</td></tr>
+<tr><td class="lbl">MA5</td><td class="val">8.9%</td><td class="lbl">MA10</td><td class="val">8.49%</td></tr>
+<tr><td class="lbl">MA60</td><td class="val">6.97%</td><td class="lbl"></td><td class="val"></td></tr>
+</table>
+</div>
+
+
+
+</div>
+<footer>A股个股波动做T套利分析系统 · 数据截止 2026-05-22 · 仅供参考不构成投资建议</footer>
+
+<script>
+(function(){
+var dates=["01-05", "01-06", "01-07", "01-08", "01-09", "01-12", "01-13", "01-14", "01-15", "01-16", "01-19", "01-20", "01-21", "01-22", "01-23", "01-26", "01-27", "01-28", "01-29", "01-30", "02-02", "02-03", "02-04", "02-05", "02-06", "02-09", "02-10", "02-11", "02-12", "02-13", "02-24", "02-25", "02-26", "02-27", "03-02", "03-03", "03-04", "03-05", "03-06", "03-09", "03-10", "03-11", "03-12", "03-13", "03-16", "03-17", "03-18", "03-19", "03-20", "03-23", "03-24", "03-25", "03-26", "03-27", "03-30", "03-31", "04-01", "04-02", "04-03", "04-07", "04-08", "04-09", "04-10", "04-13", "04-14", "04-15", "04-16", "04-17", "04-20", "04-21", "04-22", "04-23", "04-24", "04-27", "04-28", "04-29", "04-30", "05-06", "05-07", "05-08", "05-11", "05-12", "05-13", "05-14", "05-15", "05-18", "05-19", "05-20", "05-21", "05-22"];
+var amp=[3.53, 3.36, 3.27, 4.55, 7.73, 4.17, 7.05, 10.57, 5.56, 5.61, 4.58, 6.67, 7.0, 3.52, 1.92, 4.94, 5.62, 3.82, 4.0, 7.23, 6.56, 4.54, 5.38, 4.69, 4.27, 5.5, 4.81, 3.1, 3.86, 2.91, 4.98, 2.78, 5.65, 6.0, 6.51, 5.79, 8.85, 9.02, 6.87, 8.15, 9.15, 4.74, 9.95, 6.12, 4.58, 6.54, 3.94, 5.79, 5.32, 5.28, 4.91, 6.71, 4.74, 6.02, 7.69, 3.79, 4.39, 5.81, 8.28, 6.53, 5.41, 12.21, 5.59, 7.97, 3.66, 6.25, 2.29, 6.33, 5.38, 5.76, 4.19, 9.26, 9.62, 8.67, 7.8, 6.13, 8.39, 7.72, 12.52, 13.44, 8.73, 7.04, 6.21, 8.48, 9.96, 10.09, 13.28, 8.9, 7.99, 4.22];
+var ampFull=[1.66, 1.63, 1.5, 1.85, 1.83, 1.0, 3.58, 4.64, 2.06, 2.31, 2.2, 1.65, 2.15, 3.1, 2.52, 2.03, 2.19, 1.45, 3.35, 3.12, 1.01, 3.09, 1.8, 1.45, 3.73, 1.55, 1.31, 2.8, 1.73, 1.88, 1.95, 2.8, 1.99, 3.11, 3.49, 2.3, 3.19, 1.71, 2.65, 2.7, 2.84, 1.88, 1.67, 3.41, 1.89, 2.43, 1.97, 4.65, 3.25, 2.31, 1.88, 3.23, 7.16, 2.73, 2.72, 2.61, 3.69, 1.52, 4.33, 1.45, 3.78, 2.15, 3.48, 2.02, 3.01, 7.48, 2.52, 1.76, 2.99, 2.42, 5.87, 2.34, 2.16, 3.05, 3.89, 3.78, 7.06, 8.6, 6.38, 5.25, 5.36, 5.8, 3.53, 2.77, 2.69, 3.49, 1.83, 1.74, 5.3, 5.78, 3.85, 3.24, 2.46, 2.92, 2.25, 3.18, 1.55, 4.21, 6.69, 3.04, 2.09, 2.93, 2.64, 1.3, 1.71, 2.42, 1.79, 2.22, 1.61, 1.71, 1.98, 2.06, 1.09, 1.32, 2.8, 1.11, 2.15, 1.59, 3.42, 1.85, 2.23, 1.34, 1.56, 2.51, 1.95, 1.83, 1.64, 2.28, 1.15, 0.89, 1.29, 2.02, 1.1, 0.87, 2.61, 4.87, 2.19, 1.53, 2.41, 2.47, 1.96, 1.3, 1.98, 2.33, 1.62, 1.56, 2.77, 3.12, 4.43, 2.9, 4.42, 2.0, 1.63, 2.47, 2.67, 3.91, 3.39, 3.13, 1.23, 2.52, 3.39, 3.59, 1.23, 3.43, 3.44, 1.61, 1.95, 1.3, 1.67, 2.79, 2.61, 1.38, 2.58, 2.1, 1.02, 1.2, 1.92, 1.85, 2.24, 1.89, 5.57, 2.17, 1.28, 2.07, 2.41, 1.42, 2.64, 3.6, 2.4, 2.11, 3.97, 2.36, 4.51, 1.93, 2.12, 1.97, 2.41, 2.17, 7.07, 3.88, 2.12, 1.59, 1.28, 1.78, 2.96, 1.23, 1.59, 2.2, 1.46, 1.15, 1.15, 2.12, 6.2, 2.39, 2.35, 5.25, 3.02, 3.13, 2.47, 2.31, 2.82, 2.16, 4.21, 3.27, 8.84, 3.23, 4.08, 2.74, 5.13, 5.81, 2.34, 1.66, 2.49, 1.89, 7.63, 3.78, 2.26, 3.39, 2.41, 1.25, 1.24, 1.76, 1.03, 4.02, 3.32, 4.51, 3.7, 2.07, 2.11, 1.92, 2.57, 1.24, 2.53, 4.55, 3.18, 5.81, 5.92, 6.02, 2.87, 3.87, 3.14, 3.37, 2.83, 4.03, 3.09, 2.77, 2.81, 2.75, 2.19, 2.11, 2.69, 1.82, 1.54, 5.45, 2.82, 5.57, 2.47, 1.99, 2.48, 1.83, 2.02, 2.3, 2.69, 2.87, 2.58, 3.8, 1.59, 3.84, 2.5, 1.7, 2.12, 1.93, 2.2, 2.58, 2.46, 1.75, 1.49, 3.54, 8.83, 2.15, 2.49, 2.7, 2.56, 2.16, 0.96, 1.93, 3.12, 1.58, 1.12, 2.05, 2.62, 2.39, 2.57, 1.15, 1.48, 2.74, 2.79, 1.4, 1.04, 2.03, 2.73, 9.54, 4.82, 3.31, 2.82, 4.37, 3.67, 2.13, 1.72, 4.79, 3.74, 1.73, 1.75, 2.19, 2.27, 5.27, 3.23, 1.78, 5.29, 4.32, 3.95, 3.03, 1.95, 4.68, 1.85, 4.28, 2.07, 1.86, 2.23, 1.45, 1.96, 2.83, 1.77, 8.14, 3.19, 2.62, 2.08, 3.34, 2.21, 3.79, 2.53, 2.37, 3.72, 3.37, 1.8, 3.62, 3.45, 4.6, 3.69, 1.09, 3.7, 2.11, 2.43, 3.44, 1.99, 3.88, 2.7, 3.72, 3.36, 3.73, 4.28, 2.57, 1.36, 1.6, 1.54, 1.88, 1.13, 1.9, 1.45, 2.37, 2.36, 2.98, 1.3, 2.72, 1.45, 2.33, 2.22, 3.03, 2.57, 1.83, 2.88, 2.44, 1.62, 1.92, 1.61, 1.78, 2.4, 1.16, 1.7, 2.71, 2.36, 1.61, 2.01, 2.75, 2.37, 3.54, 2.15, 2.36, 2.64, 2.42, 2.35, 1.67, 1.03, 2.15, 1.3, 4.01, 1.25, 1.0, 1.0, 1.56, 1.0, 2.06, 1.2, 1.07, 2.5, 1.42, 0.92, 2.19, 1.44, 1.61, 2.01, 2.46, 7.66, 4.01, 6.89, 6.07, 5.54, 7.54, 12.24, 6.09, 4.43, 6.36, 6.83, 6.27, 4.02, 2.94, 3.31, 3.54, 4.26, 3.91, 2.98, 4.74, 4.11, 2.5, 5.72, 6.21, 5.17, 2.87, 3.08, 2.85, 4.13, 3.36, 2.33, 5.03, 4.42, 3.15, 10.89, 5.13, 4.26, 6.73, 5.44, 4.47, 4.12, 4.37, 7.9, 4.25, 9.97, 3.21, 8.77, 4.45, 7.11, 5.88, 4.3, 2.93, 7.55, 10.2, 5.35, 6.94, 4.88, 4.54, 4.76, 5.7, 4.61, 6.03, 4.32, 9.92, 6.15, 7.21, 3.43, 3.27, 5.07, 3.22, 10.4, 9.79, 4.54, 3.76, 4.75, 5.24, 6.15, 8.54, 4.75, 12.0, 4.25, 4.77, 3.18, 3.25, 5.26, 7.42, 3.23, 9.38, 4.27, 3.36, 10.0, 9.0, 10.79, 8.45, 10.91, 8.23, 7.73, 5.21, 6.51, 3.77, 12.21, 6.03, 3.52, 6.85, 8.38, 7.32, 5.55, 2.81, 6.01, 4.46, 4.57, 4.69, 4.42, 2.85, 6.48, 3.43, 3.92, 4.16, 3.03, 2.83, 2.86, 3.86, 3.36, 2.19, 3.09, 4.05, 5.8, 3.4, 6.61, 3.25, 3.61, 3.01, 4.85, 2.77, 3.54, 3.76, 4.44, 3.78, 2.24, 3.61, 3.96, 5.73, 6.54, 4.42, 3.02, 2.78, 3.88, 2.7, 2.81, 2.86, 2.52, 8.34, 11.4, 5.82, 6.69, 7.0, 4.81, 7.76, 6.97, 4.19, 11.52, 6.55, 4.9, 3.9, 3.63, 5.9, 3.51, 3.99, 3.61, 2.62, 4.55, 4.73, 5.84, 3.46, 6.88, 7.05, 4.68, 5.03, 12.82, 2.82, 2.71, 6.87, 6.26, 6.62, 5.29, 4.2, 9.51, 3.76, 4.44, 3.2, 2.21, 1.87, 3.16, 2.6, 3.8, 2.19, 3.5, 4.83, 1.97, 4.31, 3.22, 1.96, 1.98, 2.58, 10.14, 7.37, 5.74, 3.52, 2.61, 9.87, 2.68, 4.08, 3.09, 3.78, 4.06, 3.16, 3.28, 3.74, 6.95, 3.9, 3.2, 3.82, 3.1, 4.42, 3.9, 2.63, 2.98, 2.71, 6.21, 5.53, 4.13, 3.82, 4.53, 2.11, 2.66, 3.07, 3.28, 7.14, 4.37, 7.23, 9.25, 4.64, 5.56, 3.1, 7.64, 5.37, 5.54, 10.11, 9.59, 9.51, 11.66, 6.37, 5.24, 7.4, 4.18, 4.13, 6.05, 5.69, 5.45, 8.33, 7.86, 9.16, 9.78, 6.68, 10.17, 8.28, 7.29, 8.29, 13.02, 7.56, 8.12, 7.13, 4.83, 3.45, 4.77, 4.6, 3.2, 3.88, 5.21, 8.41, 5.5, 12.31, 4.23, 8.75, 6.84, 4.66, 2.73, 4.55, 5.06, 3.01, 6.01, 4.94, 5.43, 5.06, 11.5, 5.8, 6.85, 3.24, 6.74, 4.57, 11.99, 2.56, 2.69, 3.34, 6.79, 2.25, 4.18, 4.26, 2.55, 4.24, 3.42, 5.24, 3.85, 8.54, 3.36, 2.25, 5.06, 5.76, 4.74, 3.01, 3.16, 2.41, 3.52, 3.87, 2.61, 3.51, 3.85, 4.9, 3.43, 2.88, 2.93, 7.9, 2.65, 4.76, 3.04, 4.09, 13.95, 7.42, 6.08, 3.84, 5.04, 5.1, 5.15, 3.03, 3.09, 2.89, 4.93, 2.44, 6.49, 2.81, 4.87, 1.89, 4.06, 6.01, 4.7, 6.14, 2.55, 5.15, 4.71, 4.24, 2.93, 2.84, 3.22, 2.86, 4.42, 3.41, 3.87, 7.01, 3.61, 3.83, 2.88, 2.57, 2.27, 2.04, 2.5, 2.79, 2.98, 2.51, 2.99, 2.18, 3.17, 1.99, 4.75, 3.36, 2.55, 4.15, 4.73, 5.7, 1.76, 3.15, 2.01, 4.52, 1.83, 5.13, 1.89, 3.28, 2.3, 2.6, 3.14, 1.44, 4.01, 5.73, 3.05, 3.9, 6.35, 7.68, 9.16, 6.43, 7.38, 7.23, 9.11, 4.98, 3.08, 2.75, 9.84, 7.74, 4.53, 6.76, 6.63, 2.93, 3.2, 6.53, 4.87, 6.0, 7.67, 7.88, 7.71, 6.42, 5.08, 8.48, 8.26, 6.57, 4.27, 3.73, 7.7, 5.52, 4.4, 2.97, 4.32, 7.45, 5.77, 3.31, 5.13, 2.65, 3.94, 2.77, 3.34, 2.66, 2.62, 2.87, 3.69, 4.72, 3.88, 5.69, 8.3, 8.04, 10.46, 8.66, 9.83, 5.51, 8.27, 6.75, 6.74, 8.15, 3.69, 3.92, 6.89, 4.49, 6.13, 7.03, 4.94, 6.42, 4.19, 5.27, 3.8, 6.97, 2.97, 5.8, 2.94, 4.4, 3.18, 4.01, 7.38, 3.9, 4.57, 7.46, 3.66, 4.44, 3.35, 3.28, 6.05, 3.61, 5.72, 8.96, 6.63, 3.03, 3.49, 7.42, 4.51, 4.14, 8.68, 7.06, 8.83, 7.18, 3.7, 3.32, 3.85, 3.91, 2.52, 1.79, 2.94, 5.28, 3.58, 1.69, 2.31, 2.41, 1.55, 4.48, 4.42, 3.72, 2.06, 2.51, 2.24, 2.37, 1.65, 5.05, 3.64, 3.32, 9.96, 13.09, 3.54, 4.82, 2.57, 2.47, 3.59, 2.09, 2.04, 2.59, 1.92, 4.11, 2.57, 2.57, 2.36, 1.48, 3.42, 4.57, 3.1, 5.04, 2.82, 1.96, 2.45, 2.43, 4.1, 2.31, 2.46, 2.38, 1.89, 1.62, 2.66, 1.93, 2.5, 1.32, 2.44, 2.36, 1.51, 2.37, 5.64, 1.87, 2.7, 3.19, 1.87, 6.66, 3.31, 5.03, 1.62, 3.82, 3.31, 4.59, 2.53, 9.23, 3.67, 3.44, 4.42, 3.48, 2.68, 2.99, 2.87, 2.77, 3.45, 7.48, 2.84, 3.33, 2.03, 1.42, 5.8, 3.45, 7.31, 2.72, 2.15, 3.35, 1.91, 1.14, 1.41, 6.44, 2.38, 3.72, 4.02, 4.43, 1.73, 3.99, 3.29, 4.05, 1.65, 1.88, 3.34, 4.44, 2.94, 2.54, 4.86, 5.83, 12.55, 7.14, 5.55, 7.79, 6.29, 10.64, 11.31, 4.64, 7.07, 9.95, 6.22, 11.25, 5.4, 4.24, 3.5, 5.85, 8.28, 5.57, 6.35, 5.52, 3.47, 9.65, 4.8, 8.7, 11.23, 4.97, 6.6, 5.78, 4.42, 4.96, 2.37, 4.85, 4.07, 7.33, 3.17, 3.15, 5.08, 3.86, 4.92, 4.01, 4.37, 3.73, 3.29, 3.56, 3.7, 4.56, 4.47, 3.21, 3.3, 2.24, 3.2, 3.23, 3.94, 4.76, 2.79, 2.03, 2.38, 2.01, 3.83, 3.07, 3.92, 3.08, 4.21, 5.6, 5.31, 4.79, 2.17, 2.97, 1.68, 2.89, 2.99, 4.53, 5.93, 2.86, 4.73, 2.71, 5.67, 2.38, 4.07, 10.01, 4.1, 3.66, 2.32, 3.12, 2.35, 3.82, 3.04, 4.38, 4.38, 3.19, 3.53, 3.36, 3.27, 4.55, 7.73, 4.17, 7.05, 10.57, 5.56, 5.61, 4.58, 6.67, 7.0, 3.52, 1.92, 4.94, 5.62, 3.82, 4.0, 7.23, 6.56, 4.54, 5.38, 4.69, 4.27, 5.5, 4.81, 3.1, 3.86, 2.91, 4.98, 2.78, 5.65, 6.0, 6.51, 5.79, 8.85, 9.02, 6.87, 8.15, 9.15, 4.74, 9.95, 6.12, 4.58, 6.54, 3.94, 5.79, 5.32, 5.28, 4.91, 6.71, 4.74, 6.02, 7.69, 3.79, 4.39, 5.81, 8.28, 6.53, 5.41, 12.21, 5.59, 7.97, 3.66, 6.25, 2.29, 6.33, 5.38, 5.76, 4.19, 9.26, 9.62, 8.67, 7.8, 6.13, 8.39, 7.72, 12.52, 13.44, 8.73, 7.04, 6.21, 8.48, 9.96, 10.09, 13.28, 8.9, 7.99, 4.22];
+function ma(arr,w){var o=[];for(var i=0;i<arr.length;i++){if(i<w-1){o.push(null);continue}var s=0;for(var j=i-w+1;j<=i;j++)s+=arr[j];o.push(s/w)}return o}
+var ma20=ma(amp,20);
+
+new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%","1-1.5%","1.5-2%","2-2.5%","2.5-3%","3-3.5%","3.5-4%","4-5%","5-6%","6-8%",">8%"],datasets:[{label:"天数",data:[ampFull.filter(function(v){return v<1}).length,ampFull.filter(function(v){return v>=1&&v<1.5}).length,ampFull.filter(function(v){return v>=1.5&&v<2}).length,ampFull.filter(function(v){return v>=2&&v<2.5}).length,ampFull.filter(function(v){return v>=2.5&&v<3}).length,ampFull.filter(function(v){return v>=3&&v<3.5}).length,ampFull.filter(function(v){return v>=3.5&&v<4}).length,ampFull.filter(function(v){return v>=4&&v<5}).length,ampFull.filter(function(v){return v>=5&&v<6}).length,ampFull.filter(function(v){return v>=6&&v<8}).length,ampFull.filter(function(v){return v>=8}).length],backgroundColor:"#1a56db",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"日振幅分布 (" + ampFull.length + "天)",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("ts90"),{type:"line",data:{labels:dates,datasets:[{label:"日振幅 (%)",data:amp,borderColor:"#1a56db",borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:"20日均线",data:ma20,borderColor:"#dc2626",borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"近90日振幅走势",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均振幅 (%)",data:[3.95, 5.09, 4.89, 4.63, 4.33, 4.15, 3.6, 3.9, 4.14, 4.15, 3.49, 3.69],backgroundColor:["#1a56db", "#059669", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#dc2626", "#1a56db"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度振幅分布",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthRetChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均涨跌幅 (%)",data:[-0.33, 1.07, 0.22, 0.19, 0.58, 0.73, -0.07, -0.06, 0.11, 0.25, -0.0, 0.33],backgroundColor:["#dc2626", "#059669", "#059669", "#059669", "#059669", "#059669", "#dc2626", "#dc2626", "#059669", "#059669", "#059669", "#059669"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度涨跌分布",display:true,font:{size:13}}},scales:{y:{grid:{color:"#e2e8f0"}}}}});
+
+new Chart(document.getElementById("dowChart"),{type:"bar",data:{labels:["\u5468\u4e00", "\u5468\u4e8c", "\u5468\u4e09", "\u5468\u56db", "\u5468\u4e94"],datasets:[{label:"日均振幅 (%)",data:[4.26, 4.14, 4.06, 4.2, 4.11],backgroundColor:["#059669", "#1a56db", "#dc2626", "#1a56db", "#1a56db"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"周内振幅分布",display:true,font:{size:13}}}}});
+})();
+</script>
+</body>
+</html>
