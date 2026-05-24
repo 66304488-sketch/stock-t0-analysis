@@ -118,5 +118,25 @@
     "filepath": "data/raw/daily_002281_20210101_20260522.parquet",
     "fetch_time": "2026-05-24T21:22:02.580508",
     "rows": 1302
+  },
+  "daily__002714__20210101__20260522": {
+    "filepath": "data/raw/daily_002714_20210101_20260522.parquet",
+    "fetch_time": "2026-05-25T07:25:22.961118",
+    "rows": 1302
+  },
+  "daily__002028__20210101__20260522": {
+    "filepath": "data/raw/daily_002028_20210101_20260522.parquet",
+    "fetch_time": "2026-05-25T07:25:33.775784",
+    "rows": 1302
+  },
+  "daily__603290__20210101__20260522": {
+    "filepath": "data/raw/daily_603290_20210101_20260522.parquet",
+    "fetch_time": "2026-05-25T07:25:43.072491",
+    "rows": 1302
+  },
+  "industry__半导体__20210101__20260522": {
+    "filepath": "data/raw/industry_半导体_20210101_20260522.parquet",
+    "fetch_time": "2026-05-25T07:25:45.336599",
+    "rows": 732
   }
 }

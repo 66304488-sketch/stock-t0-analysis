@@ -69,6 +69,21 @@ STOCKS = {
         "industry": "光通信",
         "market_index": "sz399001",
     },
+    "002714": {
+        "name": "牧原股份",
+        "industry": "畜牧业",
+        "market_index": "sz399001",
+    },
+    "002028": {
+        "name": "思源电气",
+        "industry": "电气设备",
+        "market_index": "sz399001",
+    },
+    "603290": {
+        "name": "斯达半导",
+        "industry": "半导体",
+        "market_index": "sh000001",
+    },
     "00700": {
         "name": "腾讯控股",
         "industry": "互联网",
