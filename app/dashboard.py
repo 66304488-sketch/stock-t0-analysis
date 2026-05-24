@@ -317,7 +317,7 @@ with st.sidebar:
     st.caption(f"交易成本: {T_COST*100:.2f}% 单边 | 数据: AKShare")
 
 # ── 主区域：顶层三页 ──
-page_overview, page_signal, page_stock, page_data = st.tabs(["总览", "今日信号", "个股分析", "数据管理"])
+page_overview, page_signal, page_backtest, page_stock, page_data = st.tabs(["总览", "今日信号", "信号回测", "个股分析", "数据管理"])
 
 # ═══════════════ 总览页 ═══════════════
 with page_overview:
@@ -671,6 +671,110 @@ with page_signal:
         fig.update_layout(height=350, template="plotly_white",
                           legend=dict(orientation="h", yanchor="bottom", y=1.02))
         st.plotly_chart(fig, use_container_width=True)
+
+# ═══════════════ 信号回测页 ═══════════════
+with page_backtest:
+    st.title("信号回测验证")
+    st.caption("每天生成信号 → 匹配次日实际振幅 → 统计信号可靠度。成本按0.15%双边计算。")
+
+    @st.cache_data(ttl=300, show_spinner=False)
+    def load_backtest_data():
+        db = get_db()
+        all_stats = db.get_signal_stats()
+        per_stock = {}
+        for code in STOCKS:
+            s = db.get_signal_stats(code)
+            if s:
+                name = STOCKS[code]["name"]
+                s["name"] = name
+                s["code"] = code
+                per_stock[code] = s
+        db.close()
+        return all_stats, per_stock
+
+    all_stats, per_stock = load_backtest_data()
+
+    if all_stats:
+        # 顶部汇总
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("总信号天数", f"{all_stats['signal_days']:,}")
+        c2.metric("信号胜率", f"{all_stats['win_rate']}%")
+        c3.metric("累计净收益", f"{all_stats['net_profit']:.1f}%")
+        c4.metric("总盈利", f"{all_stats['total_profit']:.1f}%")
+        c5.metric("总亏损", f"{all_stats['total_loss']:.1f}%")
+
+        st.divider()
+
+        # 每只股票统计表
+        st.subheader("各股票信号回测对比")
+        bt_rows = []
+        for code, s in per_stock.items():
+            bt_rows.append({
+                "代码": code, "名称": s["name"],
+                "信号天数": s["signal_days"], "信号率": f"{s['signal_pct']}%",
+                "胜率": f"{s['win_rate']}%", "盈利次数": s["wins"], "亏损次数": s["loss"],
+                "净收益": f"{s['net_profit']:.1f}%",
+                "平均单次": f"{s['avg_profit']:.3%}",
+                "胜率排序": s["win_rate"], "净收益排序": s["net_profit"],
+            })
+        bt_df = pd.DataFrame(bt_rows)
+
+        sort_bt = st.selectbox("排序依据", ["胜率", "净收益"], key="bt_sort")
+        sort_key = "胜率排序" if sort_bt == "胜率" else "净收益排序"
+        bt_df = bt_df.sort_values(sort_key, ascending=False)
+
+        st.dataframe(
+            bt_df[["代码", "名称", "信号天数", "信号率", "胜率", "盈利次数", "亏损次数", "净收益", "平均单次"]].set_index("代码"),
+            use_container_width=True,
+            column_config={
+                "胜率": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%s%%"),
+                "净收益": st.column_config.ProgressColumn(min_value=0, max_value=max(bt_df["净收益排序"]) if not bt_df.empty else 100, format="%s"),
+            },
+            height=min(450, 35 * len(bt_df) + 38),
+        )
+
+        # 图表: 净收益排行
+        col_bt1, col_bt2 = st.columns(2)
+        with col_bt1:
+            bar_df = bt_df.sort_values("净收益排序", ascending=True).tail(12)
+            fig_bt = px.bar(bar_df, x="名称", y="净收益排序", color="胜率",
+                           title="累计净收益排行 (%)", color_continuous_scale="RdYlGn")
+            fig_bt.update_layout(height=350, template="plotly_white")
+            st.plotly_chart(fig_bt, use_container_width=True)
+        with col_bt2:
+            bar_df2 = bt_df.sort_values("胜率排序", ascending=True).tail(12)
+            fig_bt2 = px.bar(bar_df2, x="名称", y="胜率排序", title="信号胜率排行 (%)",
+                            color="胜率排序", color_continuous_scale="Blues")
+            fig_bt2.update_layout(height=350, template="plotly_white")
+            st.plotly_chart(fig_bt2, use_container_width=True)
+
+        # 最近的信号明细
+        st.divider()
+        st.subheader("最近信号明细")
+        sel_bt_code = st.selectbox("选择股票查看信号明细", list(STOCKS.keys()),
+                                   format_func=lambda c: f"{STOCKS[c]['name']} ({c})", key="bt_detail")
+        if sel_bt_code:
+            db2 = get_db()
+            log_df = db2.get_signal_log(sel_bt_code, limit=60)
+            db2.close()
+            if not log_df.empty:
+                log_df["date"] = pd.to_datetime(log_df["date"])
+                log_df = log_df.sort_values("date", ascending=False)
+                log_display = log_df.copy()
+                log_display["signal_label"] = log_display["signal"].apply(lambda x: "✅" if x == 1 else "❌")
+                log_display["win_label"] = log_display.apply(
+                    lambda r: "🏆+" + str(round(r["profit_est"]*100, 2)) + "%" if r["is_win"] == 1
+                    else ("❌" + str(round(r["profit_est"]*100, 2)) + "%" if r["signal"] == 1 else "-"), axis=1)
+                st.dataframe(
+                    log_display[["date", "signal_label", "composite_score", "next_amplitude", "win_label"]]
+                    .rename(columns={"date": "日期", "signal_label": "信号", "composite_score": "综合评分",
+                                     "next_amplitude": "次日振幅", "win_label": "结果"}),
+                    use_container_width=True, height=400,
+                    column_config={
+                        "综合评分": st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.3f"),
+                    })
+    else:
+        st.warning("暂无回测数据，请先同步数据库并回填信号日志。")
 
 # ═══════════════ 个股分析页 ═══════════════
 with page_stock:

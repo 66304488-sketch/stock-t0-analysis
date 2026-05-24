@@ -104,6 +104,23 @@ class AnalysisDB:
             win_rate    REAL,
             PRIMARY KEY (code, dimension, label)
         );
+
+        CREATE TABLE IF NOT EXISTS signal_log (
+            code            TEXT NOT NULL,
+            date            TEXT NOT NULL,
+            composite_score REAL,
+            signal          INTEGER DEFAULT 0,
+            amp_score       REAL,
+            liq_score       REAL,
+            idio_score      REAL,
+            regime_score    REAL,
+            next_amplitude  REAL,
+            next_pct_change REAL,
+            is_win          INTEGER DEFAULT 0,
+            profit_est      REAL,
+            created_at      TEXT DEFAULT (datetime('now','localtime')),
+            PRIMARY KEY (code, date)
+        );
         """)
 
     # ── Daily ──────────────────────────────────────
@@ -290,6 +307,97 @@ class AnalysisDB:
         for code in codes:
             result[code] = self.get_recent_regime(code, days)
         return result
+
+    # ── Signal Log ────────────────────────────────
+
+    def log_signal(self, code, date, composite_score, signal, amp_score=0, liq_score=0,
+                   idio_score=0, regime_score=0, next_amplitude=None, next_pct_change=None):
+        """记录单日信号及次日实际结果"""
+        profit_est = None
+        is_win = 0
+        if next_amplitude is not None:
+            profit_est = round(next_amplitude - 0.015, 4)  # 扣除~0.15%双边成本
+            is_win = 1 if signal == 1 and profit_est > 0 else 0
+        self.conn.execute("""
+            INSERT OR REPLACE INTO signal_log
+            (code, date, composite_score, signal, amp_score, liq_score, idio_score,
+             regime_score, next_amplitude, next_pct_change, is_win, profit_est)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        """, (code, date, composite_score, signal, amp_score, liq_score, idio_score,
+              regime_score, next_amplitude, next_pct_change, is_win, profit_est))
+        self.conn.commit()
+
+    def backfill_signals(self, code, signal_df, daily_df):
+        """批量回填信号日志：signal_df需含 composite_score/signal/各分项评分，daily_df需含 amplitude/pct_change"""
+        import pandas as pd
+        if signal_df.index.name is not None or not isinstance(signal_df.index, (range,)):
+            signal_df = signal_df.reset_index()
+        if daily_df.index.name is not None or not isinstance(daily_df.index, (range,)):
+            daily_df = daily_df.reset_index()
+        date_col_s = "date" if "date" in signal_df.columns else signal_df.columns[0]
+        date_col_d = "date" if "date" in daily_df.columns else daily_df.columns[0]
+        signal_df[date_col_s] = pd.to_datetime(signal_df[date_col_s])
+        daily_df[date_col_d] = pd.to_datetime(daily_df[date_col_d])
+        # shift: today's signal predicts tomorrow's amplitude
+        daily_df["_next_amp"] = daily_df["amplitude"].shift(-1)
+        daily_df["_next_pct"] = daily_df["pct_change"].shift(-1)
+        merged = signal_df.merge(
+            daily_df[[date_col_d, "_next_amp", "_next_pct"]],
+            left_on=date_col_s, right_on=date_col_d, how="left")
+        count = 0
+        for _, row in merged.iterrows():
+            d = pd.Timestamp(row[date_col_s]).strftime("%Y-%m-%d")
+            sig = int(row.get("signal", 0))
+            cs = float(row.get("composite_score", 0))
+            self.log_signal(
+                code, d, cs, sig,
+                amp_score=float(row.get("score_amplitude", 0) or 0),
+                liq_score=float(row.get("score_liquidity", 0) or 0),
+                idio_score=float(row.get("score_idio", 0) or 0),
+                regime_score=float(row.get("score_regime", 0) or 0),
+                next_amplitude=float(row["_next_amp"]) if pd.notna(row.get("_next_amp")) else None,
+                next_pct_change=float(row["_next_pct"]) if pd.notna(row.get("_next_pct")) else None,
+            )
+            count += 1
+        self.conn.commit()
+        return count
+
+    def get_signal_log(self, code, limit=None):
+        """获取某股票的信号日志"""
+        sql = "SELECT * FROM signal_log WHERE code=? ORDER BY date DESC"
+        params = [code]
+        if limit:
+            sql += " LIMIT ?"
+            params.append(limit)
+        return pd.read_sql(sql, self.conn, params=params)
+
+    def get_signal_stats(self, code=None):
+        """信号回测统计：胜率/累计收益等"""
+        if code:
+            rows = self.conn.execute(
+                "SELECT * FROM signal_log WHERE code=? AND next_amplitude IS NOT NULL ORDER BY date",
+                [code]).fetchall()
+        else:
+            rows = self.conn.execute(
+                "SELECT * FROM signal_log WHERE next_amplitude IS NOT NULL ORDER BY date").fetchall()
+        if not rows:
+            return None
+        total = len(rows)
+        signal_days = sum(1 for r in rows if r["signal"] == 1)
+        wins = sum(1 for r in rows if r["is_win"] == 1)
+        loss = sum(1 for r in rows if r["signal"] == 1 and r["is_win"] == 0)
+        win_rate = round(wins / signal_days * 100, 1) if signal_days > 0 else 0
+        total_profit = sum(r["profit_est"] or 0 for r in rows if r["signal"] == 1 and r["is_win"] == 1)
+        total_loss = sum(abs(r["profit_est"] or 0) for r in rows if r["signal"] == 1 and r["is_win"] == 0)
+        avg_profit_vals = [r["profit_est"] or 0 for r in rows if r["signal"] == 1]
+        avg_p = round(sum(avg_profit_vals) / len(avg_profit_vals), 3) if avg_profit_vals else 0
+        return {
+            "total_days": total, "signal_days": signal_days, "signal_pct": round(signal_days/total*100,1) if total else 0,
+            "wins": wins, "loss": loss, "win_rate": win_rate,
+            "total_profit": round(total_profit, 3), "total_loss": round(total_loss, 3),
+            "net_profit": round(total_profit - total_loss, 3),
+            "avg_profit": avg_p,
+        }
 
     # ── Utility ────────────────────────────────────
 
