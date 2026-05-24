@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>久立特材(002318) · 做T分析</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto Sans SC",sans-serif;background:#f1f5f9;color:#1e293b;line-height:1.6;-webkit-text-size-adjust:100%}
+.header{background:linear-gradient(135deg,#0f172a,#1e3a5f,#1a56db);color:#fff;padding:32px 16px 24px;text-align:center}
+.header .code{font-size:0.85rem;opacity:0.7;letter-spacing:2px}
+.header h1{font-size:1.5rem;font-weight:800;margin:6px 0}
+.header .meta{font-size:0.8rem;opacity:0.7;margin-top:8px}
+.header .meta span{margin:0 6px}
+.container{max-width:640px;margin:0 auto;padding:12px}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.card h2{font-size:1.05rem;font-weight:700;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #e2e8f0;display:flex;align-items:center;gap:6px}
+.card h2 .icon{font-size:1.2rem}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi{background:#f8fafc;border-radius:8px;padding:12px;text-align:center;border:1px solid #e2e8f0}
+.kpi .label{font-size:0.7rem;color:#64748b;text-transform:uppercase;letter-spacing:0.3px}
+.kpi .value{font-size:1.35rem;font-weight:800;color:#1e293b;margin:2px 0}
+.kpi .sub{font-size:0.72rem;color:#64748b}
+.kpi.warn .value{color:#d97706}
+.kpi.good .value{color:#059669}
+.kpi.bad .value{color:#dc2626}
+.data-table{width:100%;border-collapse:collapse;font-size:0.8rem}
+.data-table td{padding:8px 10px;border-bottom:1px solid #f1f5f9;vertical-align:top}
+.data-table tr:last-child td{border-bottom:none}
+.data-table .lbl{color:#64748b;white-space:nowrap;width:40%;font-weight:500}
+.data-table .val{font-weight:600;text-align:right}
+.data-table .hi{color:#059669}
+.data-table .lo{color:#dc2626}
+.chart-wrap{position:relative;width:100%}
+.chart-200{height:200px}
+.chart-240{height:240px}
+.chart-280{height:280px}
+.tag{display:inline-block;padding:2px 8px;border-radius:12px;font-size:0.7rem;font-weight:700}
+.tag-green{background:#d1fae5;color:#065f46}
+.tag-yellow{background:#fef3c7;color:#92400e}
+.tag-red{background:#fee2e2;color:#991b1b}
+.tag-blue{background:#dbeafe;color:#1e40af}
+.tag-purple{background:#ede9fe;color:#5b21b6}
+.section-title{font-size:0.9rem;font-weight:700;color:#475569;margin:14px 0 8px;padding-left:4px;border-left:3px solid #1a56db}
+.score-bar{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.score-bar .name{font-size:0.75rem;width:56px;text-align:right;color:#64748b;flex-shrink:0}
+.score-bar .track{flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden}
+.score-bar .fill{height:100%;border-radius:4px;transition:width 0.3s}
+.score-bar .num{font-size:0.75rem;font-weight:700;width:36px;flex-shrink:0}
+.bt-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;gap:8px;font-size:0.78rem}
+.bt-row .bt-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:800;color:#fff;flex-shrink:0}
+.bt-row .bt-params{flex:1;font-weight:600}
+.bt-row .bt-metrics{text-align:right}
+.bt-row .bt-metrics div{line-height:1.3}
+.strategy{background:linear-gradient(135deg,#ecfdf5,#dbeafe);border:1px solid #a7f3d0;border-radius:10px;padding:14px}
+.strategy h3{font-size:0.95rem;font-weight:700;color:#065f46;margin-bottom:8px}
+.strategy li{font-size:0.82rem;margin-bottom:6px;padding-left:4px;line-height:1.5;list-style-position:inside}
+.best-tag{display:inline-block;background:#f59e0b;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
+.season-cell{border-bottom:1px dashed #e2e8f0;padding:6px 4px}
+footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
+@media(min-width:480px){
+.kpi-grid{grid-template-columns:repeat(3,1fr)}
+.header h1{font-size:1.8rem}
+.data-table{font-size:0.85rem}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+<div class="code">SZ.002318 · 特钢 · sz399001</div>
+<h1>久立特材 做T分析报告</h1>
+<div class="meta"><span>2021-04-06 ~ 2026-05-22</span><span>1242 个交易日</span><span>数据: AKShare</span></div>
+</div>
+
+<div class="container">
+
+<div class="card">
+<h2><span class="icon">&#x1F4CA;</span> 核心指标</h2>
+<div class="kpi-grid">
+<div class="kpi good"><div class="label">日均振幅</div><div class="value">3.37%</div><div class="sub">中位数 2.93%</div></div>
+<div class="kpi"><div class="label">近30日振幅</div><div class="value">3.61%</div><div class="sub">最高 7.41% / 最低 1.51%</div></div>
+<div class="kpi good"><div class="label">特质波动占比</div><div class="value">83.7%</div><div class="sub">R²_mkt = 0.1633</div></div>
+<div class="kpi"><div class="label">波动聚集度</div><div class="value">0.9282</div><div class="sub">GARCH α+β</div></div>
+<div class="kpi good"><div class="label">做T综合评分</div><div class="value">0.6157</div><div class="sub">昨日: 0.661 (强信号 ✅)</div></div>
+<div class="kpi"><div class="label">信号触发率</div><div class="value">54.43%</div><div class="sub">676 / 1242 天</div></div>
+</div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C8;</span> 振幅分布</h2>
+<div class="chart-wrap chart-280"><canvas id="ampDist"></canvas></div>
+<div class="section-title">分位数详情</div>
+<table class="data-table">
+<tr><td class="lbl">最小值</td><td class="val">0.85%</td><td class="lbl">P10</td><td class="val">1.72%</td></tr>
+<tr><td class="lbl">P25</td><td class="val">2.15%</td><td class="lbl">P50 (中位数)</td><td class="val">2.93%</td></tr>
+<tr><td class="lbl">P75</td><td class="val">4.09%</td><td class="lbl">P90</td><td class="val">5.59%</td></tr>
+<tr><td class="lbl">P95</td><td class="val">6.73%</td><td class="lbl">P99</td><td class="val">9.88%</td></tr>
+<tr><td class="lbl">最大值</td><td class="val">14.55%</td><td class="lbl">标准差</td><td class="val">1.74%</td></tr>
+<tr><td class="lbl">偏度 (Skew)</td><td class="val">1.72</td><td class="lbl">峰度 (Kurt)</td><td class="val">4.29</td></tr>
+</table>
+<div class="section-title">分布特征</div>
+<table class="data-table">
+<tr><td class="lbl">最优拟合分布</td><td class="val">对数正态 (Lognormal)</td><td class="lbl">极端振幅 (&gt;5%)</td><td class="val">13.53% (168天)</td></tr>
+<tr><td class="lbl">最长连续高振幅</td><td class="val">4 天</td><td class="lbl">平均连续高振幅</td><td class="val">1.6 天</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C9;</span> 近90日振幅走势</h2>
+<div class="chart-wrap chart-280"><canvas id="ts90"></canvas></div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4C5;</span> 季节性分析</h2>
+<div class="chart-wrap chart-280"><canvas id="monthChart"></canvas></div>
+<div class="section-title">月度振幅</div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份</td><td class="val hi">10月</td><td class="lbl">最差月份</td><td class="val lo">6月</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+<div class="season-cell">1月: 3.63%</div><div class="season-cell">2月: 3.38%</div><div class="season-cell">3月: 3.29%</div><div class="season-cell">4月: 3.61%</div><div class="season-cell">5月: 3.11%</div><div class="season-cell">6月: 2.85%</div><div class="season-cell">7月: 2.87%</div><div class="season-cell">8月: 3.48%</div><div class="season-cell">9月: 3.86%</div><div class="season-cell">10月: 4.04%</div><div class="season-cell">11月: 3.29%</div><div class="season-cell">12月: 3.18%</div>
+</div>
+<div class="section-title">月度涨跌</div>
+<div class="chart-wrap chart-240"><canvas id="monthRetChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份(涨)</td><td class="val hi">8月</td><td class="lbl">最差月份(跌)</td><td class="val lo">3月</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+<div class="season-cell">1月: <span style="color:#059669">+0.18%</span> 胜率49.5%</div><div class="season-cell">2月: <span style="color:#059669">+0.19%</span> 胜率51.8%</div><div class="season-cell">3月: <span style="color:#dc2626">-0.28%</span> 胜率41.8%</div><div class="season-cell">4月: <span style="color:#059669">+0.20%</span> 胜率51.3%</div><div class="season-cell">5月: <span style="color:#dc2626">-0.06%</span> 胜率47.7%</div><div class="season-cell">6月: <span style="color:#dc2626">-0.01%</span> 胜率48.5%</div><div class="season-cell">7月: <span style="color:#dc2626">-0.09%</span> 胜率45.5%</div><div class="season-cell">8月: <span style="color:#059669">+0.34%</span> 胜率51.4%</div><div class="season-cell">9月: <span style="color:#059669">+0.12%</span> 胜率49.0%</div><div class="season-cell">10月: <span style="color:#059669">+0.07%</span> 胜率48.8%</div><div class="season-cell">11月: <span style="color:#059669">+0.27%</span> 胜率46.7%</div><div class="season-cell">12月: <span style="color:#059669">+0.20%</span> 胜率50.5%</div>
+</div>
+<div class="section-title">季度振幅</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem">
+<div class="season-cell">Q1: 3.43%</div><div class="season-cell">Q2: 3.21%</div><div class="season-cell">Q3: 3.39%</div><div class="season-cell">Q4: 3.46%</div>
+</div>
+<div class="section-title">周内效应</div>
+<div class="chart-wrap chart-240"><canvas id="dowChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳交易日</td><td class="val hi">周一</td><td class="lbl">最差交易日</td><td class="val lo">周三</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4E6;</span> GARCH(1,1) 波动率建模</h2>
+<table class="data-table">
+<tr><td class="lbl">omega (常数)</td><td class="val">0.221601</td><td class="lbl">alpha (ARCH)</td><td class="val">0.1738</td></tr>
+<tr><td class="lbl">beta (GARCH)</td><td class="val">0.7544</td><td class="lbl">persistence (α+β)</td><td class="val">0.9282</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F504;</span> 波动率分解</h2>
+<table class="data-table">
+<tr><td class="lbl">市场联动 R²</td><td class="val">0.1633</td><td class="lbl">特质波动占比</td><td class="val">83.7%</td></tr>
+<tr><td class="lbl">60日Beta均值</td><td class="val">0.6447</td><td class="lbl">最新Beta</td><td class="val">0.7731</td></tr>
+<tr><td class="lbl">残余波动均值</td><td class="val">1.96%</td><td class="lbl">最新残余波动</td><td class="val">1.71%</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F3AF;</span> 做T信号系统</h2>
+<div class="section-title">综合评分 (昨日)</div>
+<table class="data-table">
+<tr><td class="lbl">综合做T评分</td><td class="val" style="font-size:1.1rem">0.661</td><td class="lbl">信号状态</td><td class="val"><span class="tag tag-green">开 ✅</span></td></tr>
+<tr><td class="lbl">历史评分均值</td><td class="val">0.6157</td><td class="lbl">信号触发率</td><td class="val">54.43% (676天)</td></tr>
+</table>
+<div class="section-title">分项评分 (昨日)</div>
+<div class="score-bar"><span class="name">振幅</span><div class="track"><div class="fill" style="width:64.3%;background:#1a56db"></div></div><span class="num">0.6429</span></div><div class="score-bar"><span class="name">流动性</span><div class="track"><div class="fill" style="width:54.8%;background:#1a56db"></div></div><span class="num">0.5481</span></div><div class="score-bar"><span class="name">特质</span><div class="track"><div class="fill" style="width:68.5%;background:#1a56db"></div></div><span class="num">0.685</span></div><div class="score-bar"><span class="name">市态</span><div class="track"><div class="fill" style="width:82.0%;background:#1a56db"></div></div><span class="num">0.8202</span></div>
+<div class="section-title">分项历史均值</div>
+<table class="data-table">
+<tr><td class="lbl">振幅评分</td><td class="val">0.4886</td></tr><tr><td class="lbl">流动性评分</td><td class="val">0.5169</td></tr><tr><td class="lbl">特质评分</td><td class="val">0.8367</td></tr><tr><td class="lbl">市态评分</td><td class="val">0.7181</td></tr>
+</table>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4B0;</span> 回测结果</h2>
+<div style="font-size:0.8rem;color:#64748b;margin-bottom:8px">逻辑：开盘价×(1+入场阈值)买入，出场阈值卖出，需在日内高低点范围内。仅统计信号日。</div>
+<div class="bt-row" style="font-weight:700;color:#64748b;border-bottom:2px solid #e2e8f0">
+<div class="bt-rank" style="background:transparent;color:#64748b">#</div><div class="bt-params">参数</div><div class="bt-metrics"><div>胜率 / 均利 / 次数</div></div>
+</div>
+<div class="bt-row"><div class="bt-rank" style="background:#f59e0b">1</div><div class="bt-params">入场 -0.03 出场 +0.01</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 3.82% x 50次 = 190.88%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#94a3b8">2</div><div class="bt-params">入场 -0.02 出场 +0.025</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 4.28% x 31次 = 132.83%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#b45309">3</div><div class="bt-params">入场 -0.01 出场 +0.025</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 3.23% x 78次 = 251.94%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#64748b">4</div><div class="bt-params">入场 -0.01 出场 +0.02</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 2.73% x 117次 = 318.91%</div></div></div><div class="bt-row"><div class="bt-rank" style="background:#64748b">5</div><div class="bt-params">入场 -0.01 出场 +0.015</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">100.0%</div><div>均利 2.22% x 168次 = 373.21%</div></div></div>
+</div>
+
+<div class="card">
+  <h2><span class="icon">&#x1F4A1;</span> 做T策略建议</h2>
+  <div class="strategy">
+    <h3>久立特材 做T可行性评估 - <span style="color:#059669">推荐</span></h3>
+    <ul>
+      <li><strong>历史统计评估：</strong><span style="color:#059669;font-weight:700">非常适合做T</span>。
+          日均振幅 3.37%，中位数 2.93%，特质占比 83.7%，历史信号率 54.43%，历史综合评分 0.6157。
+          <span style="font-size:0.8rem;color:#64748b">← 基于全部历史数据的统计结论</span></li>
+      <li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#05966915;border-left:3px solid #059669">
+      <strong>🟢 最新信号状态：</strong><span style="color:#059669;font-weight:700">强烈推荐</span>
+      （最新综合评分 0.661，信号 已触发）
+      <span style="font-size:0.8rem;color:#64748b">← 仅反映最新交易日，判断明天是否适合做T</span></li>
+      <li><strong>方向选择：</strong>优先<span style='color:#059669'>正T（先买后卖）</span>，整体上升趋势，顺势而为</li>
+      <li><strong>入场时机：</strong>最佳月份：<strong>10月</strong>，最佳交易日：<strong>周一</strong></li>
+      <li><strong>止盈/止损参考：</strong>止盈 +2.9%（基于P75振幅），止损 -1.1%（日内硬止损）</li>
+      <li><strong>最佳参数（历史回测）：</strong>入场阈值 -0.03，出场阈值 +0.01（胜率100.0%）</li>
+      
+      <li><strong>仓位建议：</strong>底仓的30%用于做T，单日最多2次操作。</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+<h2><span class="icon">&#x1F4B5;</span> 量价参考</h2>
+<table class="data-table">
+<tr><td class="lbl">最新收盘价</td><td class="val">26.4 元</td><td class="lbl">历史均价</td><td class="val">18.94 元</td></tr>
+<tr><td class="lbl">区间涨跌幅</td><td class="val hi">+134.04%</td><td class="lbl">日均涨跌幅</td><td class="val">0.0935%</td></tr>
+<tr><td class="lbl">日收益波动率</td><td class="val">2.24%</td><td class="lbl">日均成交额</td><td class="val">1.8 亿</td></tr>
+<tr><td class="lbl">最新成交额</td><td class="val">2.4 亿</td><td class="lbl">最新振幅MA20</td><td class="val">3.76%</td></tr>
+<tr><td class="lbl">MA5</td><td class="val">4.0%</td><td class="lbl">MA10</td><td class="val">3.95%</td></tr>
+<tr><td class="lbl">MA60</td><td class="val">3.67%</td><td class="lbl"></td><td class="val"></td></tr>
+</table>
+</div>
+
+<div class="card">
+      <h2><span class="icon">&#x1F4CA;</span> 近期对比</h2>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table class="data-table">
+        <tr style="font-weight:700;color:#64748b"><td class="lbl">股票</td><td class="val">振幅</td><td class="val">特质</td><td class="val">GARCH</td><td class="val">信号</td><td class="val">评分</td><td class="val">评价</td></tr>
+        <tr style="background:#fefce8;font-weight:700"><td class="lbl">久立特材</td><td class="val">3.4%</td><td class="val">83.7%</td><td class="val">0.9282</td><td class="val">54.43%</td><td class="val">0.6157</td><td class="val">当前</td></tr><tr><td class="lbl">宁德时代</td><td class="val">3.5%</td><td class="val">43.6%</td><td class="val">0.9706</td><td class="val">41.30%</td><td class="val">0.5501</td><td class="val"><span style="color:#0891b2;font-weight:700">激进</span></td></tr><tr><td class="lbl">贵州茅台</td><td class="val">2.0%</td><td class="val">71.4%</td><td class="val">0.9527</td><td class="val">46.05%</td><td class="val">0.5833</td><td class="val"><span style="color:#dc2626;font-weight:700">不适合</span></td></tr><tr><td class="lbl">陕西煤业</td><td class="val">3.2%</td><td class="val">87.4%</td><td class="val">0.9467</td><td class="val">62.00%</td><td class="val">0.6596</td><td class="val"><span style="color:#059669;font-weight:700">最佳</span></td></tr><tr><td class="lbl">紫金矿业</td><td class="val">3.0%</td><td class="val">71.7%</td><td class="val">0.7684</td><td class="val">57.89%</td><td class="val">0.6347</td><td class="val">均衡</td></tr><tr><td class="lbl">三一重工</td><td class="val">2.8%</td><td class="val">64.0%</td><td class="val">0.9505</td><td class="val">54.11%</td><td class="val">0.6051</td><td class="val">均衡</td></tr>
+      </table>
+      </div>
+      <div style="font-size:0.7rem;color:#94a3b8;margin-top:6px">仅显示最近分析的 6 只股票，当前行高亮</div>
+    </div>
+
+</div>
+<footer>A股个股波动做T套利分析系统 · 数据截止 2026-05-22 · 仅供参考不构成投资建议</footer>
+
+<script>
+(function(){
+var dates=["01-05", "01-06", "01-07", "01-08", "01-09", "01-12", "01-13", "01-14", "01-15", "01-16", "01-19", "01-20", "01-21", "01-22", "01-23", "01-26", "01-27", "01-28", "01-29", "01-30", "02-02", "02-03", "02-04", "02-05", "02-06", "02-09", "02-10", "02-11", "02-12", "02-13", "02-24", "02-25", "02-26", "02-27", "03-02", "03-03", "03-04", "03-05", "03-06", "03-09", "03-10", "03-11", "03-12", "03-13", "03-16", "03-17", "03-18", "03-19", "03-20", "03-23", "03-24", "03-25", "03-26", "03-27", "03-30", "03-31", "04-01", "04-02", "04-03", "04-07", "04-08", "04-09", "04-10", "04-13", "04-14", "04-15", "04-16", "04-17", "04-20", "04-21", "04-22", "04-23", "04-24", "04-27", "04-28", "04-29", "04-30", "05-06", "05-07", "05-08", "05-11", "05-12", "05-13", "05-14", "05-15", "05-18", "05-19", "05-20", "05-21", "05-22"];
+var amp=[3.7, 2.86, 3.35, 2.94, 2.88, 5.31, 4.44, 4.37, 3.11, 3.52, 5.62, 7.24, 2.56, 4.71, 3.22, 3.6, 6.62, 9.97, 4.46, 5.66, 6.24, 6.57, 2.66, 4.48, 4.86, 4.03, 3.99, 2.55, 3.92, 3.4, 2.61, 4.3, 3.54, 2.17, 3.88, 4.67, 4.73, 2.69, 6.12, 3.69, 4.0, 5.54, 5.25, 2.36, 3.86, 4.25, 3.32, 4.67, 3.16, 4.77, 2.63, 3.18, 2.74, 2.96, 3.65, 3.43, 1.85, 4.58, 4.07, 3.06, 3.77, 4.17, 2.71, 3.61, 3.87, 3.86, 2.37, 3.52, 2.45, 2.72, 1.51, 2.6, 2.16, 2.71, 7.41, 6.4, 3.64, 2.89, 2.98, 3.41, 3.59, 3.84, 2.36, 4.71, 4.94, 4.66, 4.45, 3.88, 3.76, 3.27];
+function ma(arr,w){var o=[];for(var i=0;i<arr.length;i++){if(i<w-1){o.push(null);continue}var s=0;for(var j=i-w+1;j<=i;j++)s+=arr[j];o.push(s/w)}return o}
+var ma20=ma(amp,20);
+
+new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%","1-1.5%","1.5-2%","2-2.5%","2.5-3%","3-3.5%","3.5-4%","4-5%","5-6%","6-8%",">8%"],datasets:[{label:"天数",data:[amp.filter(function(v){return v<1}).length,amp.filter(function(v){return v>=1&&v<1.5}).length,amp.filter(function(v){return v>=1.5&&v<2}).length,amp.filter(function(v){return v>=2&&v<2.5}).length,amp.filter(function(v){return v>=2.5&&v<3}).length,amp.filter(function(v){return v>=3&&v<3.5}).length,amp.filter(function(v){return v>=3.5&&v<4}).length,amp.filter(function(v){return v>=4&&v<5}).length,amp.filter(function(v){return v>=5&&v<6}).length,amp.filter(function(v){return v>=6&&v<8}).length,amp.filter(function(v){return v>=8}).length],backgroundColor:"#1a56db",borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"日振幅分布",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("ts90"),{type:"line",data:{labels:dates,datasets:[{label:"日振幅 (%)",data:amp,borderColor:"#1a56db",borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:"20日均线",data:ma20,borderColor:"#dc2626",borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"近90日振幅走势",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均振幅 (%)",data:[3.63, 3.38, 3.29, 3.61, 3.11, 2.85, 2.87, 3.48, 3.86, 4.04, 3.29, 3.18],backgroundColor:["#1a56db", "#1a56db", "#1a56db", "#1a56db", "#1a56db", "#dc2626", "#1a56db", "#1a56db", "#1a56db", "#059669", "#1a56db", "#1a56db"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度振幅分布",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthRetChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均涨跌幅 (%)",data:[0.18, 0.19, -0.28, 0.2, -0.06, -0.01, -0.09, 0.34, 0.12, 0.07, 0.27, 0.2],backgroundColor:["#059669", "#059669", "#dc2626", "#059669", "#dc2626", "#dc2626", "#dc2626", "#059669", "#059669", "#059669", "#059669", "#059669"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度涨跌分布",display:true,font:{size:13}}},scales:{y:{grid:{color:"#e2e8f0"}}}}});
+
+new Chart(document.getElementById("dowChart"),{type:"bar",data:{labels:["\u5468\u4e00", "\u5468\u4e8c", "\u5468\u4e09", "\u5468\u56db", "\u5468\u4e94"],datasets:[{label:"日均振幅 (%)",data:[3.53, 3.42, 3.19, 3.47, 3.23],backgroundColor:["#059669", "#1a56db", "#dc2626", "#1a56db", "#1a56db"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"周内振幅分布",display:true,font:{size:13}}}}});
+})();
+</script>
+</body>
+</html>

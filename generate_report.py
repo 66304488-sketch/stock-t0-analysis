@@ -184,6 +184,19 @@ def extract_stats(code, config):
     data["month_worst"] = month_names[int(monthly.idxmin()) - 1]
     data["monthly_list"] = [round(float(v), 2) for v in monthly.tolist()]
 
+    # 月度涨跌
+    if "pct_change" in df.columns:
+        ret = df["pct_change"].dropna()
+        df2["pct_change"] = ret
+        monthly_ret = df2.groupby("month")["pct_change"].mean()
+        monthly_win = df2.groupby("month")["pct_change"].apply(lambda x: (x > 0).mean() * 100)
+        data["month_ret"] = {month_names[i-1]: round(float(v), 2) for i, v in monthly_ret.items()}
+        data["month_win"] = {month_names[i-1]: round(float(v), 1) for i, v in monthly_win.items()}
+        data["month_ret_best"] = month_names[int(monthly_ret.idxmax()) - 1]
+        data["month_ret_worst"] = month_names[int(monthly_ret.idxmin()) - 1]
+        data["monthly_ret_list"] = [round(float(v), 2) for v in monthly_ret.tolist()]
+        data["monthly_win_list"] = [round(float(v), 1) for v in monthly_win.tolist()]
+
     df2["quarter"] = df2.index.quarter
     quarterly = df2.groupby("quarter")["amplitude"].mean() * 100
     data["quarter_amp"] = {f"Q{int(i)}": round(float(v), 2) for i, v in quarterly.items()}
@@ -264,7 +277,7 @@ def build_strategy(c):
     backtest = c.get("backtest_top5", [])
     primary = c["color_primary"]
 
-    # 评级
+    # ── 历史统计评级 ──
     if amp_mean >= 3.0 and idio_ratio >= 0.7 and signal_pct >= 50:
         grade = "非常适合做T"
         grade_color = "#059669"
@@ -281,6 +294,26 @@ def build_strategy(c):
         grade = "不适合做T"
         grade_color = "#dc2626"
         verdict = "不推荐"
+
+    # ── 最新信号评级 ──
+    score_last = c.get("composite_score_last", 0)
+    signal_last = c.get("signal_last", 0)
+    if score_last >= 0.65 and signal_last == 1:
+        sig_label = "强烈推荐"
+        sig_color = "#059669"
+        sig_icon = "🟢"
+    elif score_last >= 0.6 and signal_last == 1:
+        sig_label = "适合做T"
+        sig_color = "#1a56db"
+        sig_icon = "🔵"
+    elif score_last >= 0.5:
+        sig_label = "谨慎观望"
+        sig_color = "#d97706"
+        sig_icon = "🟡"
+    else:
+        sig_label = "不建议"
+        sig_color = "#dc2626"
+        sig_icon = "🔴"
 
     # 方向建议
     if total_ret > 15:
@@ -329,13 +362,23 @@ def build_strategy(c):
     if c.get("garch_persistence", 0) > 0.95:
         garch_warn = "高波动聚集下建议减半仓位"
 
+    # 最新信号HTML
+    sig_html = """<li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:%s15;border-left:3px solid %s">
+      <strong>%s 最新信号状态：</strong><span style="color:%s;font-weight:700">%s</span>
+      （最新综合评分 %.3f，信号 %s）
+      <span style="font-size:0.8rem;color:#64748b">← 仅反映最新交易日，判断明天是否适合做T</span></li>""" % (
+        sig_color, sig_color, sig_icon, sig_color, sig_label, score_last,
+        "已触发" if signal_last == 1 else "未触发")
+
     return """<div class="card">
   <h2><span class="icon">&#x1F4A1;</span> 做T策略建议</h2>
   <div class="strategy">
     <h3>%s 做T可行性评估 - <span style="color:%s">%s</span></h3>
     <ul>
-      <li><strong>总体结论：</strong><span style="color:%s;font-weight:700">%s</span>。
-          日均振幅 %s%%，中位数 %s%%，特质占比 %s%%，信号触发率 %s%%，综合评分 %s。</li>
+      <li><strong>历史统计评估：</strong><span style="color:%s;font-weight:700">%s</span>。
+          日均振幅 %s%%，中位数 %s%%，特质占比 %s%%，历史信号率 %s%%，历史综合评分 %s。
+          <span style="font-size:0.8rem;color:#64748b">← 基于全部历史数据的统计结论</span></li>
+      %s
       <li><strong>方向选择：</strong>%s</li>
       <li><strong>入场时机：</strong>%s</li>
       <li><strong>止盈/止损参考：</strong>止盈 +%s%%（基于P75振幅），止损 -%s%%（日内硬止损）</li>
@@ -348,6 +391,7 @@ def build_strategy(c):
         c["name"], grade_color, verdict,
         grade_color, grade, amp_mean, amp_median, round(idio_ratio * 100, 1),
         signal_pct, score,
+        sig_html,
         direction, timing, take_profit, stop_loss, best_entry,
         risk_html, garch_warn,
     )
@@ -398,8 +442,8 @@ def build_html(data, comparison=None):
         compare_html = '<div class="card">\n      <h2><span class="icon">&#x1F4CA;</span> 近期对比</h2>\n      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">\n      <table class="data-table">\n        <tr style="font-weight:700;color:#64748b"><td class="lbl">股票</td><td class="val">振幅</td><td class="val">特质</td><td class="val">GARCH</td><td class="val">信号</td><td class="val">评分</td><td class="val">评价</td></tr>\n        ' + "".join(rows) + '\n      </table>\n      </div>\n      <div style="font-size:0.7rem;color:#94a3b8;margin-top:6px">仅显示最近分析的 ' + str(len(comparison)) + ' 只股票，当前行高亮</div>\n    </div>'
 
     # 月度/季度网格
-    month_grid = ''.join('<div>' + m + ': ' + str(v) + '%</div>' for m, v in c["month_amp"].items())
-    quarter_grid = ''.join('<div>' + q + ': ' + str(v) + '%</div>' for q, v in c["quarter_amp"].items())
+    month_grid = ''.join('<div class="season-cell">' + m + ': ' + str(v) + '%</div>' for m, v in c["month_amp"].items())
+    quarter_grid = ''.join('<div class="season-cell">' + q + ': ' + str(v) + '%</div>' for q, v in c["quarter_amp"].items())
 
     # 评分进度条
     score_bars_parts = []
@@ -423,8 +467,23 @@ def build_html(data, comparison=None):
         bt_parts.append('<div class="bt-row"><div class="bt-rank" style="background:' + bt_colors[i] + '">' + str(i+1) + '</div><div class="bt-params">入场 ' + str(r["entry"]) + ' 出场 +' + str(r["exit"]) + '</div><div class="bt-metrics"><div style="color:#059669;font-weight:700">' + str(r["win_rate"]) + '%</div><div>均利 ' + str(r["avg_pnl"]) + '% x ' + str(r["trades"]) + '次 = ' + str(r["total_pnl"]) + '%</div></div></div>')
     bt_rows = "".join(bt_parts)
 
+    # 月度涨跌网格
+    if "month_ret" in c:
+        month_ret_grid = ''.join('<div class="season-cell">' + m + ': <span style="color:' + ('#059669' if v >= 0 else '#dc2626') + '">' + ('+' if v >= 0 else '') + ('%.2f' % v) + '%</span> 胜率' + str(c["month_win"].get(m, "-")) + '%</div>' for m, v in c["month_ret"].items())
+        month_ret_labels_js = json.dumps([str(i)+"月" for i in range(1, 13)])
+        month_ret_data_js = json.dumps(c.get("monthly_ret_list", [0]*12))
+        month_ret_bg_js = json.dumps(["#059669" if v >= 0 else "#dc2626" for v in c.get("monthly_ret_list", [0]*12)])
+        month_ret_best = c.get("month_ret_best", "-")
+        month_ret_worst = c.get("month_ret_worst", "-")
+    else:
+        month_ret_grid = '<div class="season-cell">数据不可用</div>'
+        month_ret_labels_js = json.dumps([str(i)+"月" for i in range(1, 13)])
+        month_ret_data_js = json.dumps([0]*12)
+        month_ret_bg_js = json.dumps(["#94a3b8"]*12)
+        month_ret_best = "-"
+        month_ret_worst = "-"
+
     # JS数据
-    import json
     dates_90_js = json.dumps([d[-5:] for d in c["dates_90"]])
     amp_90_js = json.dumps(c["amp_90"])
     month_labels_js = json.dumps([str(i)+"月" for i in range(1, 13)])
@@ -474,7 +533,7 @@ def build_html(data, comparison=None):
         c["amp_min"], c["amp_p10"], c["amp_p25"], c["amp_p50"], c["amp_p75"], c["amp_p90"],
         c["amp_p95"], c["amp_p99"], c["amp_max"], c["amp_std"], c["amp_skew"], c["amp_kurtosis"],
         ex_pct, ex_days, c["max_high_streak"], c["avg_high_streak"],
-        c["month_best"], c["month_worst"], month_grid, quarter_grid,
+        c["month_best"], c["month_worst"], month_grid, month_ret_best, month_ret_worst, month_ret_grid, quarter_grid,
         c["dow_best"], c["dow_worst"],
         c.get("garch_omega", "-"), c.get("garch_alpha", "-"), c.get("garch_beta", "-"), c.get("garch_persistence", "-"),
         c.get("r_squared_mean", "-"), idio_pct, c.get("beta_60_mean", "-"), c.get("beta_60_last", "-"),
@@ -492,6 +551,7 @@ def build_html(data, comparison=None):
         dates_90_js, amp_90_js,
         primary, primary,
         month_labels_js, month_data_js, month_bg_js,
+        month_ret_labels_js, month_ret_data_js, month_ret_bg_js,
         dow_labels_js, dow_data_js, dow_bg_js,
     )
     return html
@@ -558,6 +618,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto
 .strategy h3{font-size:0.95rem;font-weight:700;color:#065f46;margin-bottom:8px}
 .strategy li{font-size:0.82rem;margin-bottom:6px;padding-left:4px;line-height:1.5;list-style-position:inside}
 .best-tag{display:inline-block;background:#f59e0b;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
+.season-cell{border-bottom:1px dashed #e2e8f0;padding:6px 4px}
 footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
 @media(min-width:480px){
 .kpi-grid{grid-template-columns:repeat(3,1fr)}
@@ -618,6 +679,14 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
 <div class="section-title">月度振幅</div>
 <table class="data-table">
 <tr><td class="lbl">最佳月份</td><td class="val hi">%s</td><td class="lbl">最差月份</td><td class="val lo">%s</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+%s
+</div>
+<div class="section-title">月度涨跌</div>
+<div class="chart-wrap chart-240"><canvas id="monthRetChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份(涨)</td><td class="val hi">%s</td><td class="lbl">最差月份(跌)</td><td class="val lo">%s</td></tr>
 </table>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
 %s
@@ -705,6 +774,8 @@ new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%%","1
 new Chart(document.getElementById("ts90"),{type:"line",data:{labels:dates,datasets:[{label:"日振幅 (%%)",data:amp,borderColor:"%s",borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:"20日均线",data:ma20,borderColor:"#dc2626",borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"近90日振幅走势",display:true,font:{size:13}}}}});
 
 new Chart(document.getElementById("monthChart"),{type:"bar",data:{labels:%s,datasets:[{label:"月均振幅 (%%)",data:%s,backgroundColor:%s,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度振幅分布",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthRetChart"),{type:"bar",data:{labels:%s,datasets:[{label:"月均涨跌幅 (%%)",data:%s,backgroundColor:%s,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度涨跌分布",display:true,font:{size:13}}},scales:{y:{grid:{color:"#e2e8f0"}}}}});
 
 new Chart(document.getElementById("dowChart"),{type:"bar",data:{labels:%s,datasets:[{label:"日均振幅 (%%)",data:%s,backgroundColor:%s,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"周内振幅分布",display:true,font:{size:13}}}}});
 })();

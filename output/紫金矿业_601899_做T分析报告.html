@@ -57,7 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Noto
 .strategy h3{font-size:0.95rem;font-weight:700;color:#065f46;margin-bottom:8px}
 .strategy li{font-size:0.82rem;margin-bottom:6px;padding-left:4px;line-height:1.5;list-style-position:inside}
 .best-tag{display:inline-block;background:#f59e0b;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
-.caution-tag{display:inline-block;background:#dc2626;color:#fff;font-size:0.65rem;padding:2px 6px;border-radius:8px;margin-left:4px;vertical-align:middle;font-weight:700}
+.season-cell{border-bottom:1px dashed #e2e8f0;padding:6px 4px}
 footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
 @media(min-width:480px){
 .kpi-grid{grid-template-columns:repeat(3,1fr)}
@@ -120,11 +120,19 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
 <tr><td class="lbl">最佳月份</td><td class="val hi">4月</td><td class="lbl">最差月份</td><td class="val lo">12月</td></tr>
 </table>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
-<div>1月: 3.15%</div><div>2月: 2.89%</div><div>3月: 3.3%</div><div>4月: 3.59%</div><div>5月: 3.04%</div><div>6月: 2.8%</div><div>7月: 2.72%</div><div>8月: 2.83%</div><div>9月: 3.32%</div><div>10月: 3.34%</div><div>11月: 2.58%</div><div>12月: 2.31%</div>
+<div class="season-cell">1月: 3.15%</div><div class="season-cell">2月: 2.89%</div><div class="season-cell">3月: 3.3%</div><div class="season-cell">4月: 3.59%</div><div class="season-cell">5月: 3.04%</div><div class="season-cell">6月: 2.8%</div><div class="season-cell">7月: 2.72%</div><div class="season-cell">8月: 2.83%</div><div class="season-cell">9月: 3.32%</div><div class="season-cell">10月: 3.34%</div><div class="season-cell">11月: 2.58%</div><div class="season-cell">12月: 2.31%</div>
+</div>
+<div class="section-title">月度涨跌</div>
+<div class="chart-wrap chart-240"><canvas id="monthRetChart"></canvas></div>
+<table class="data-table">
+<tr><td class="lbl">最佳月份(涨)</td><td class="val hi">1月</td><td class="lbl">最差月份(跌)</td><td class="val lo">5月</td></tr>
+</table>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem;margin-top:8px">
+<div class="season-cell">1月: <span style="color:#059669">+0.41%</span> 胜率57.9%</div><div class="season-cell">2月: <span style="color:#059669">+0.17%</span> 胜率54.2%</div><div class="season-cell">3月: <span style="color:#059669">+0.32%</span> 胜率55.5%</div><div class="season-cell">4月: <span style="color:#059669">+0.15%</span> 胜率50.4%</div><div class="season-cell">5月: <span style="color:#dc2626">-0.27%</span> 胜率45.0%</div><div class="season-cell">6月: <span style="color:#059669">+0.02%</span> 胜率46.5%</div><div class="season-cell">7月: <span style="color:#059669">+0.10%</span> 胜率50.9%</div><div class="season-cell">8月: <span style="color:#059669">+0.18%</span> 胜率52.3%</div><div class="season-cell">9月: <span style="color:#059669">+0.17%</span> 胜率50.0%</div><div class="season-cell">10月: <span style="color:#059669">+0.07%</span> 胜率47.6%</div><div class="season-cell">11月: <span style="color:#059669">+0.05%</span> 胜率48.6%</div><div class="season-cell">12月: <span style="color:#059669">+0.15%</span> 胜率58.6%</div>
 </div>
 <div class="section-title">季度振幅</div>
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:0.78rem">
-<div>Q1: 3.13%</div><div>Q2: 3.17%</div><div>Q3: 2.95%</div><div>Q4: 2.69%</div>
+<div class="season-cell">Q1: 3.13%</div><div class="season-cell">Q2: 3.17%</div><div class="season-cell">Q3: 2.95%</div><div class="season-cell">Q4: 2.69%</div>
 </div>
 <div class="section-title">周内效应</div>
 <div class="chart-wrap chart-240"><canvas id="dowChart"></canvas></div>
@@ -179,8 +187,13 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
   <div class="strategy">
     <h3>紫金矿业 做T可行性评估 - <span style="color:#0891b2">推荐</span></h3>
     <ul>
-      <li><strong>总体结论：</strong><span style="color:#0891b2;font-weight:700">适合做T</span>。
-          日均振幅 2.99%，中位数 2.69%，特质占比 71.7%，信号触发率 57.89%，综合评分 0.6347。</li>
+      <li><strong>历史统计评估：</strong><span style="color:#0891b2;font-weight:700">适合做T</span>。
+          日均振幅 2.99%，中位数 2.69%，特质占比 71.7%，历史信号率 57.89%，历史综合评分 0.6347。
+          <span style="font-size:0.8rem;color:#64748b">← 基于全部历史数据的统计结论</span></li>
+      <li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#05966915;border-left:3px solid #059669">
+      <strong>🟢 最新信号状态：</strong><span style="color:#059669;font-weight:700">强烈推荐</span>
+      （最新综合评分 0.706，信号 已触发）
+      <span style="font-size:0.8rem;color:#64748b">← 仅反映最新交易日，判断明天是否适合做T</span></li>
       <li><strong>方向选择：</strong>优先<span style='color:#059669'>正T（先买后卖）</span>，整体上升趋势，顺势而为</li>
       <li><strong>入场时机：</strong>最佳月份：<strong>4月</strong>，最佳交易日：<strong>周一</strong></li>
       <li><strong>止盈/止损参考：</strong>止盈 +2.6%（基于P75振幅），止损 -1.0%（日内硬止损）</li>
@@ -208,10 +221,10 @@ footer{text-align:center;padding:24px;font-size:0.75rem;color:#94a3b8}
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table class="data-table">
         <tr style="font-weight:700;color:#64748b"><td class="lbl">股票</td><td class="val">振幅</td><td class="val">特质</td><td class="val">GARCH</td><td class="val">信号</td><td class="val">评分</td><td class="val">评价</td></tr>
-        <tr style="background:#fefce8;font-weight:700"><td class="lbl">紫金矿业</td><td class="val">3.0%</td><td class="val">71.7%</td><td class="val">0.7684</td><td class="val">57.89%</td><td class="val">0.6347</td><td class="val">当前</td></tr><tr><td class="lbl">三一重工</td><td class="val">2.8%</td><td class="val">64.0%</td><td class="val">0.9505</td><td class="val">54.11%</td><td class="val">0.6051</td><td class="val">均衡</td></tr><tr><td class="lbl">宁德时代</td><td class="val">3.5%</td><td class="val">43.6%</td><td class="val">0.9706</td><td class="val">41.30%</td><td class="val">0.5501</td><td class="val"><span style="color:#0891b2;font-weight:700">激进</span></td></tr><tr><td class="lbl">陕西煤业</td><td class="val">3.2%</td><td class="val">87.4%</td><td class="val">0.9467</td><td class="val">62.00%</td><td class="val">0.6596</td><td class="val"><span style="color:#059669;font-weight:700">最佳</span></td></tr>
+        <tr style="background:#fefce8;font-weight:700"><td class="lbl">紫金矿业</td><td class="val">3.0%</td><td class="val">71.7%</td><td class="val">0.7684</td><td class="val">57.89%</td><td class="val">0.6347</td><td class="val">当前</td></tr><tr><td class="lbl">三一重工</td><td class="val">2.8%</td><td class="val">64.0%</td><td class="val">0.9505</td><td class="val">54.11%</td><td class="val">0.6051</td><td class="val">均衡</td></tr><tr><td class="lbl">陕西煤业</td><td class="val">3.2%</td><td class="val">87.4%</td><td class="val">0.9467</td><td class="val">62.00%</td><td class="val">0.6596</td><td class="val"><span style="color:#059669;font-weight:700">最佳</span></td></tr>
       </table>
       </div>
-      <div style="font-size:0.7rem;color:#94a3b8;margin-top:6px">仅显示最近分析的 4 只股票，当前行高亮</div>
+      <div style="font-size:0.7rem;color:#94a3b8;margin-top:6px">仅显示最近分析的 3 只股票，当前行高亮</div>
     </div>
 
 </div>
@@ -229,6 +242,8 @@ new Chart(document.getElementById("ampDist"),{type:"bar",data:{labels:["<1%","1-
 new Chart(document.getElementById("ts90"),{type:"line",data:{labels:dates,datasets:[{label:"日振幅 (%)",data:amp,borderColor:"#dc2626",borderWidth:1,pointRadius:0,tension:0.2,fill:false},{label:"20日均线",data:ma20,borderColor:"#dc2626",borderWidth:1.5,pointRadius:0,tension:0.3,fill:false}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"近90日振幅走势",display:true,font:{size:13}}}}});
 
 new Chart(document.getElementById("monthChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均振幅 (%)",data:[3.15, 2.89, 3.3, 3.59, 3.04, 2.8, 2.72, 2.83, 3.32, 3.34, 2.58, 2.31],backgroundColor:["#dc2626", "#dc2626", "#dc2626", "#059669", "#dc2626", "#dc2626", "#dc2626", "#dc2626", "#dc2626", "#dc2626", "#dc2626", "#dc2626"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度振幅分布",display:true,font:{size:13}}}}});
+
+new Chart(document.getElementById("monthRetChart"),{type:"bar",data:{labels:["1\u6708", "2\u6708", "3\u6708", "4\u6708", "5\u6708", "6\u6708", "7\u6708", "8\u6708", "9\u6708", "10\u6708", "11\u6708", "12\u6708"],datasets:[{label:"月均涨跌幅 (%)",data:[0.41, 0.17, 0.32, 0.15, -0.27, 0.02, 0.1, 0.18, 0.17, 0.07, 0.05, 0.15],backgroundColor:["#059669", "#059669", "#059669", "#059669", "#dc2626", "#059669", "#059669", "#059669", "#059669", "#059669", "#059669", "#059669"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"月度涨跌分布",display:true,font:{size:13}}},scales:{y:{grid:{color:"#e2e8f0"}}}}});
 
 new Chart(document.getElementById("dowChart"),{type:"bar",data:{labels:["\u5468\u4e00", "\u5468\u4e8c", "\u5468\u4e09", "\u5468\u56db", "\u5468\u4e94"],datasets:[{label:"日均振幅 (%)",data:[3.23, 3.0, 2.79, 2.89, 3.03],backgroundColor:["#059669", "#dc2626", "#dc2626", "#dc2626", "#dc2626"],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{title:{text:"周内振幅分布",display:true,font:{size:13}}}}});
 })();

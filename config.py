@@ -34,6 +34,36 @@ STOCKS = {
         "industry": "跨境ETF",
         "market_index": "sh000001",  # 上证指数
     },
+    "002928": {
+        "name": "华夏航空",
+        "industry": "航空运输",
+        "market_index": "sz399001",  # 深证成指
+    },
+    "002318": {
+        "name": "久立特材",
+        "industry": "特钢",
+        "market_index": "sz399001",  # 深证成指
+    },
+    "603444": {
+        "name": "吉比特",
+        "industry": "游戏",
+        "market_index": "sh000001",
+    },
+    "601127": {
+        "name": "赛力斯",
+        "industry": "汽车",
+        "market_index": "sh000001",
+    },
+    "002182": {
+        "name": "宝武镁业",
+        "industry": "有色金属",
+        "market_index": "sz399001",
+    },
+    "601058": {
+        "name": "赛轮轮胎",
+        "industry": "轮胎",
+        "market_index": "sh000001",
+    },
 }
 
 # ---- 数据日期范围 ----

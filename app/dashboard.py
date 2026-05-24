@@ -14,13 +14,14 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import streamlit as st
 
-from config import STOCKS, SIGNAL_WEIGHTS, SIGNAL_THRESHOLD, T_COST
+from config import STOCKS, SIGNAL_WEIGHTS, SIGNAL_THRESHOLD, T_COST, DEFAULT_END_DATE, DEFAULT_START_DATE
 from src.data_fetcher import StockDataFetcher
 from src.data_cleaner import standardize_daily_columns, standardize_index_columns, merge_all
 from src.features import FeatureEngineer
 from src.signals import TSignalGenerator
 from src.backtest import TBacktester
 from src.analysis import AmplitudeAnalyzer
+from db import AnalysisDB
 
 st.set_page_config(page_title="做T套利分析", page_icon="", layout="wide")
 
@@ -37,32 +38,48 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ── 数据加载（优先读磁盘parquet，没有再fetch）──
+# ── 数据加载（DB优先，parquet回退）──
+def get_db():
+    """获取DB连接（每次新建，避免跨session问题）"""
+    return AnalysisDB()
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def load_all_summaries():
+    """加载所有股票的摘要统计（用于总览页）"""
+    db = get_db()
+    summaries = db.get_all_summaries()
+    db.close()
+    return summaries
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def load_all_regimes():
+    """加载所有股票的近20日市场状态（震荡/单边）"""
+    db = get_db()
+    regimes = db.get_all_recent_regimes(20)
+    db.close()
+    return regimes
+
+
 @st.cache_data(ttl=300, show_spinner=False)
 def load_and_process(stock_code):
-    """加载或获取数据，运行特征工程。按stock_code缓存。"""
-    from config import DEFAULT_END_DATE
-    import os
-
-    # 先检查磁盘是否有处理好的特征文件
+    """加载特征数据。DB有则跳过，否则从parquet读或重新拉取。"""
+    # parquet 优先（特征工程已完成）
     cache_path = f"data/processed/{stock_code}_features.parquet"
     if os.path.exists(cache_path):
-        import pandas as pd
         df = pd.read_parquet(cache_path)
-        # 检查数据是否够新
         last_date = df.index.max()
         expected = pd.Timestamp(DEFAULT_END_DATE)
         if last_date >= expected - pd.Timedelta(days=5):
             return df
 
-    # 磁盘没有或太旧，重新拉取
+    # 重新拉取+处理
     cfg = STOCKS[stock_code]
     fetcher = StockDataFetcher()
     raw = fetcher.fetch_all_for_stock(
-        stock_code,
-        start="20210101", end=DEFAULT_END_DATE,
-        market_index=cfg["market_index"],
-        industry=cfg["industry"],
+        stock_code, start=DEFAULT_START_DATE, end=DEFAULT_END_DATE,
+        market_index=cfg["market_index"], industry=cfg["industry"],
     )
     daily = standardize_daily_columns(raw["daily"])
     idx = standardize_index_columns(raw["index"], "idx")
@@ -70,10 +87,122 @@ def load_and_process(stock_code):
     merged = merge_all(daily, idx, ind)
     engineer = FeatureEngineer()
     df = engineer.process(merged)
-    # 保存到磁盘
     os.makedirs("data/processed", exist_ok=True)
     df.to_parquet(cache_path)
     return df
+
+
+def check_stock_status(stock_code):
+    """检查股票数据状态。返回 (status, last_date, days)"""
+    cache_path = f"data/processed/{stock_code}_features.parquet"
+    if not os.path.exists(cache_path):
+        return ("missing", None, 0)
+    try:
+        df = pd.read_parquet(cache_path)
+        last_date = df.index.max()
+        days = len(df)
+        expected = pd.Timestamp(DEFAULT_END_DATE)
+        if last_date >= expected - pd.Timedelta(days=3):
+            # 再检查DB是否有摘要
+            db = get_db()
+            has_db = db.has_summary(stock_code)
+            db.close()
+            return ("ok" if has_db else "no_db_summary", last_date.strftime("%Y-%m-%d"), days)
+        elif last_date >= expected - pd.Timedelta(days=14):
+            return ("stale", last_date.strftime("%Y-%m-%d"), days)
+        else:
+            return ("outdated", last_date.strftime("%Y-%m-%d"), days)
+    except Exception:
+        return ("error", None, 0)
+
+
+def smart_refresh_all(status_callback=None):
+    """智能刷新：已有且不过时的跳过，只拉取缺失/过时的。返回 (fetched, skipped, failed)"""
+    fetched, skipped, failed = [], [], []
+    all_codes = list(STOCKS.keys())
+    for i, code in enumerate(all_codes):
+        status, last_date, days = check_stock_status(code)
+        name = STOCKS[code]["name"]
+        if status_callback:
+            status_callback(i, len(all_codes), f"{name} — {status}")
+
+        if status == "ok":
+            skipped.append((code, last_date, days))
+            continue
+
+        # 需要抓取：missing / stale / outdated / no_db_summary
+        try:
+            cfg = STOCKS[code]
+            fetcher = StockDataFetcher()
+            raw = fetcher.fetch_all_for_stock(
+                code, start=DEFAULT_START_DATE, end=DEFAULT_END_DATE,
+                market_index=cfg["market_index"], industry=cfg["industry"],
+            )
+            daily = standardize_daily_columns(raw["daily"])
+            idx = standardize_index_columns(raw["index"], "idx")
+            ind = standardize_index_columns(raw.get("industry"), "ind") if raw.get("industry") is not None else None
+            merged = merge_all(daily, idx, ind)
+            engineer = FeatureEngineer()
+            df = engineer.process(merged)
+            os.makedirs("data/processed", exist_ok=True)
+            df.to_parquet(f"data/processed/{code}_features.parquet")
+
+            # 同步DB
+            db = get_db()
+            db.insert_daily(code, df)
+            from generate_report import extract_stats, load_config
+            stats = extract_stats(code, load_config())
+            db.upsert_summary(stats)
+            db.upsert_seasonality(code, stats)
+            db.close()
+            fetched.append((code, df.index.max().strftime("%Y-%m-%d"), len(df)))
+        except Exception as e:
+            failed.append((code, str(e)))
+
+    return fetched, skipped, failed
+
+
+def refresh_single_stock(stock_code):
+    """强制刷新单只股票：拉取+处理+同步DB"""
+    cfg = STOCKS[stock_code]
+    fetcher = StockDataFetcher()
+    raw = fetcher.fetch_all_for_stock(
+        stock_code, start=DEFAULT_START_DATE, end=DEFAULT_END_DATE,
+        market_index=cfg["market_index"], industry=cfg["industry"],
+    )
+    daily = standardize_daily_columns(raw["daily"])
+    idx = standardize_index_columns(raw["index"], "idx")
+    ind = standardize_index_columns(raw.get("industry"), "ind") if raw.get("industry") is not None else None
+    merged = merge_all(daily, idx, ind)
+    engineer = FeatureEngineer()
+    df = engineer.process(merged)
+    os.makedirs("data/processed", exist_ok=True)
+    df.to_parquet(f"data/processed/{stock_code}_features.parquet")
+
+    db = get_db()
+    db.insert_daily(stock_code, df)
+    from generate_report import extract_stats, load_config
+    stats = extract_stats(stock_code, load_config())
+    db.upsert_summary(stats)
+    db.upsert_seasonality(stock_code, stats)
+    db.close()
+    return df
+
+
+def verify_data_gaps(stock_code):
+    """验证某只股票是否有数据缺口。返回缺口日期列表"""
+    cache_path = f"data/processed/{stock_code}_features.parquet"
+    if not os.path.exists(cache_path):
+        return []
+    df = pd.read_parquet(cache_path)
+    df = df.sort_index()
+    # 交易日缺口（>5天无数据视为缺口，排除周末节假日）
+    gaps = []
+    for i in range(1, len(df)):
+        gap_days = (df.index[i] - df.index[i-1]).days
+        if gap_days > 5:
+            gaps.append((df.index[i-1].strftime("%Y-%m-%d"), df.index[i].strftime("%Y-%m-%d"), gap_days))
+    return gaps
 
 
 @st.cache_data(ttl=300, show_spinner=False)
@@ -107,40 +236,460 @@ def run_backtest(stock_code, sig_thresh):
 # ── 侧边栏 ──
 with st.sidebar:
     st.title("做T套利分析")
-    stock = st.selectbox("选择股票", list(STOCKS.keys()),
-                          format_func=lambda x: f"{x} {STOCKS[x]['name']}")
+
+    # ── 数据管理 ──
+    st.subheader("数据管理")
+
+    # 先扫描所有股票状态
+    status_summary = {"ok": 0, "stale": 0, "missing": 0, "outdated": 0, "no_db_summary": 0, "error": 0}
+    for code in STOCKS:
+        s, _, _ = check_stock_status(code)
+        status_summary[s] = status_summary.get(s, 0) + 1
+    need_fetch = status_summary["missing"] + status_summary["stale"] + status_summary["outdated"] + status_summary["no_db_summary"]
+
+    col_sync1, col_sync2 = st.columns(2)
+    with col_sync1:
+        btn_label = f"智能刷新 ({need_fetch}只待更新)" if need_fetch > 0 else "智能刷新（数据已最新）"
+        if st.button(btn_label, use_container_width=True, type="primary" if need_fetch > 0 else "secondary",
+                      help="跳过已是最新的股票，仅拉取缺失/过时的数据"):
+            progress = st.progress(0, "扫描中...")
+            def cb(i, total, msg):
+                progress.progress((i + 1) / total, msg)
+            fetched, skipped, failed = smart_refresh_all(cb)
+            progress.empty()
+            st.cache_data.clear()
+            msg_parts = []
+            if fetched:
+                msg_parts.append(f"抓取 {len(fetched)} 只：{', '.join(c for c,_,_ in fetched)}")
+            if skipped:
+                msg_parts.append(f"跳过 {len(skipped)} 只（数据最新）")
+            if failed:
+                msg_parts.append(f"失败 {len(failed)} 只")
+            st.success(" | ".join(msg_parts))
+            st.rerun()
+
+    with col_sync2:
+        if st.button("同步到数据库", use_container_width=True,
+                      help="将parquet数据同步到SQLite（仅更新摘要统计）"):
+            from sync_db import sync_daily, sync_summary
+            db2 = AnalysisDB()
+            for code in STOCKS:
+                sync_daily(db2, code)
+                sync_summary(db2, code, force=True)
+            db2.close()
+            st.cache_data.clear()
+            st.success("已同步到数据库")
+            st.rerun()
+            for code in STOCKS:
+                sync_daily(db2, code)
+                sync_summary(db2, code, force=True)
+            db2.close()
+            st.cache_data.clear()
+            st.success("已同步到数据库")
+            st.rerun()
+
+    # DB 状态
+    db_stat = get_db()
+    s = db_stat.stats()
+    db_stat.close()
+    st.caption(f"DB: {s['stock_count']} 只股票, {s['daily_rows']} 行日线")
 
     st.divider()
-    st.subheader("信号参数")
-    w_amp = st.slider("振幅权重", 0.0, 1.0, SIGNAL_WEIGHTS["amplitude"], 0.05)
-    w_liq = st.slider("流动性权重", 0.0, 1.0, SIGNAL_WEIGHTS["liquidity"], 0.05)
-    w_idio = st.slider("特质波动权重", 0.0, 1.0, SIGNAL_WEIGHTS["idio"], 0.05)
-    w_reg = st.slider("波动区间权重", 0.0, 1.0, SIGNAL_WEIGHTS["regime"], 0.05)
-    sig_thresh = st.slider("信号阈值", 0.3, 0.9, SIGNAL_THRESHOLD, 0.05)
+
+    # ── 股票选择 ──
+    stock_options = [f"{c} {STOCKS[c]['name']}" for c in STOCKS]
+    stock_search = st.selectbox("选择股票（可输入搜索）", stock_options,
+                                 help="输入代码或名称搜索")
+    stock = stock_search.split()[0]
+
+    st.divider()
+
+    # ── 信号参数（可折叠）──
+    with st.expander("信号参数调整", expanded=False):
+        w_amp = st.slider("振幅权重", 0.0, 1.0, SIGNAL_WEIGHTS["amplitude"], 0.05)
+        w_liq = st.slider("流动性权重", 0.0, 1.0, SIGNAL_WEIGHTS["liquidity"], 0.05)
+        w_idio = st.slider("特质波动权重", 0.0, 1.0, SIGNAL_WEIGHTS["idio"], 0.05)
+        w_reg = st.slider("波动区间权重", 0.0, 1.0, SIGNAL_WEIGHTS["regime"], 0.05)
+        sig_thresh = st.slider("信号阈值", 0.3, 0.9, SIGNAL_THRESHOLD, 0.05)
     weights = {"amplitude": w_amp, "liquidity": w_liq, "idio": w_idio, "regime": w_reg}
 
     st.divider()
-    st.caption(f"交易成本假设: {T_COST*100:.2f}% 单边")
-    st.caption("数据来源: AKShare (新浪/腾讯)")
+    st.caption(f"交易成本: {T_COST*100:.2f}% 单边 | 数据: AKShare")
 
-# ── 主区域 ──
-status = st.empty()
-with status:
-    with st.spinner(f"加载 {STOCKS[stock]['name']}({stock}) 数据中..."):
-        df = load_and_process(stock)
-        analysis = run_analysis(stock)
-        signal_df = run_signals(stock, w_amp, w_liq, w_idio, w_reg, sig_thresh)
-        backtest_df = run_backtest(stock, sig_thresh)
-status.empty()
+# ── 主区域：顶层三页 ──
+page_overview, page_signal, page_stock, page_data = st.tabs(["总览", "今日信号", "个股分析", "数据管理"])
 
-stock_name = STOCKS[stock]["name"]
-dist = analysis.get("distribution", {})
-decomp = analysis.get("decomposition", {})
-season = analysis.get("seasonality", {})
-tail = analysis.get("tail", {})
+# ═══════════════ 总览页 ═══════════════
+with page_overview:
+    st.title("股票池总览")
+    summaries = load_all_summaries()
+    regimes = load_all_regimes()
 
-# ═══════════════ 概览 ═══════════════
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["概览", "振幅分析", "联动分析", "信号系统", "回测分析", "实战策略"])
+    if summaries:
+        # ── 市场状态概览 ──
+        regime_counts = {"单边涨": 0, "单边跌": 0, "偏涨震荡": 0, "偏跌震荡": 0, "窄幅震荡": 0}
+        for code in STOCKS:
+            if code in regimes:
+                lbl = regimes[code].get("label", "")
+                if lbl in regime_counts:
+                    regime_counts[lbl] += 1
+        rc1, rc2, rc3, rc4, rc5 = st.columns(5)
+        regime_style = {
+            "单边涨": ("", "#dc2626"), "单边跌": ("", "#059669"),
+            "偏涨震荡": ("", "#d97706"), "偏跌震荡": ("", "#1a56db"),
+            "窄幅震荡": ("", "#6366f1"),
+        }
+        for i, (label, count) in enumerate(regime_counts.items()):
+            col = [rc1, rc2, rc3, rc4, rc5][i]
+            icon, color = regime_style[label]
+            col.markdown(
+                f"""<div style="text-align:center;padding:8px;border-radius:8px;border:1px solid {color}20;background:{color}08">
+                <div style="font-size:1.5rem;font-weight:bold;color:{color}">{count}</div>
+                <div style="font-size:0.75rem;color:#64748b">{icon} {label}</div></div>""",
+                unsafe_allow_html=True)
+
+        # 构建对比表
+        rows = []
+        for code in STOCKS:
+            if code not in summaries:
+                continue
+            s = summaries[code]
+            r = regimes.get(code, {})
+            amp = s.get("amp_mean", 0)
+            idio = round(s.get("idio_ratio_mean", 0) * 100, 1) if s.get("idio_ratio_mean") else 0
+            signal = s.get("signal_pct", 0)
+            score = s.get("composite_score_mean", 0)
+            garch_p = s.get("garch_persistence", 0)
+            bt_json = s.get("backtest_top5_json")
+            if isinstance(bt_json, str):
+                import json
+                try: bt_json = json.loads(bt_json)
+                except: bt_json = None
+            best_win = f"{bt_json[0]['win_rate']}%" if bt_json and len(bt_json) > 0 else "-"
+
+            # 评价
+            if amp >= 3.0 and idio >= 70:
+                verdict = "最佳"
+            elif amp >= 2.5 and idio >= 50:
+                verdict = "推荐"
+            elif amp >= 2.2:
+                verdict = "谨慎"
+            else:
+                verdict = "不适合"
+
+            rows.append({
+                "代码": code, "名称": s.get("name", code), "行业": s.get("industry", ""),
+                "日均振幅": f"{amp}%", "振幅排序": amp,
+                "特质占比": f"{idio}%", "特质排序": idio,
+                "信号率": f"{signal}%", "信号排序": signal,
+                "综合评分": score, "评分排序": score,
+                "GARCH α+β": garch_p,
+                "最佳胜率": best_win,
+                "评价": verdict,
+                "近20日状态": f"{r.get('label', '-')} ({r.get('trend_pct', 0):+.1f}%)",
+                "状态排序": r.get("ratio", 0),
+            })
+
+        if rows:
+            df_view = pd.DataFrame(rows)
+            display_cols = ["代码", "名称", "行业", "日均振幅", "特质占比", "信号率", "综合评分", "近20日状态", "GARCH α+β", "最佳胜率", "评价"]
+
+            # 排序控制
+            sort_map = {"日均振幅": "振幅排序", "特质占比": "特质排序", "信号率": "信号排序", "综合评分": "评分排序"}
+            sort_col = st.selectbox("排序依据", list(sort_map.keys()), index=0)
+            df_view = df_view.sort_values(sort_map[sort_col], ascending=False)
+
+            # 筛选
+            col_f1, col_f2 = st.columns(2)
+            with col_f1:
+                min_amp = st.slider("最低日均振幅", 1.0, 5.0, 2.0, 0.1)
+            with col_f2:
+                show_all = st.checkbox("显示全部（含不适合）", value=True)
+            if not show_all:
+                df_view = df_view[df_view["评价"].isin(["最佳", "推荐", "谨慎"])]
+            df_view = df_view[df_view[sort_map[sort_col]] >= min_amp]
+
+            st.dataframe(
+                df_view[display_cols].set_index("代码"),
+                use_container_width=True,
+                column_config={
+                    "综合评分": st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.2f"),
+                    "GARCH α+β": st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.3f"),
+                },
+                height=min(400, 35 * len(df_view) + 38),
+            )
+            st.caption(f"共 {len(df_view)} 只股票符合条件，点击「个股分析」页查看详情")
+
+            # 对比图
+            col_ch1, col_ch2 = st.columns(2)
+            with col_ch1:
+                chart_data = df_view.sort_values("振幅排序", ascending=True).tail(15)
+                fig = px.bar(chart_data, x="名称", y="振幅排序",
+                             color="评价", title="日均振幅对比 (%)",
+                             color_discrete_map={"最佳": "#059669", "推荐": "#1a56db", "谨慎": "#d97706", "不适合": "#dc2626"})
+                fig.update_layout(height=350, template="plotly_white")
+                st.plotly_chart(fig, use_container_width=True)
+            with col_ch2:
+                chart_data2 = df_view.sort_values("特质排序", ascending=True).tail(15)
+                fig2 = px.bar(chart_data2, x="名称", y="特质排序",
+                              color="评价", title="特质波动占比对比 (%)",
+                              color_discrete_map={"最佳": "#059669", "推荐": "#1a56db", "谨慎": "#d97706", "不适合": "#dc2626"})
+                fig2.update_layout(height=350, template="plotly_white")
+                st.plotly_chart(fig2, use_container_width=True)
+        else:
+            st.warning("暂无数据，请先同步数据库")
+    else:
+        st.warning("数据库为空。请点击侧边栏「同步到数据库」按钮初始化数据。")
+
+# ═══════════════ 数据管理页 ═══════════════
+with page_data:
+    st.title("数据管理")
+    db_info = get_db()
+    stats = db_info.stats()
+    db_info.close()
+
+    col_d1, col_d2, col_d3 = st.columns(3)
+    col_d1.metric("股票数量", stats["stock_count"])
+    col_d2.metric("日线总行数", f"{stats['daily_rows']:,}")
+    col_d3.metric("数据库", "data/analysis.db")
+
+    st.divider()
+    st.subheader("各股票数据状态")
+
+    status_rows = []
+    for code in STOCKS:
+        cfg = STOCKS[code]
+        parquet_exists = os.path.exists(f"data/processed/{code}_features.parquet")
+        db_has = code in stats.get("codes", [])
+
+        if parquet_exists:
+            df = pd.read_parquet(f"data/processed/{code}_features.parquet")
+            last_date = df.index.max().strftime("%Y-%m-%d")
+            days = len(df)
+        else:
+            last_date = "-"
+            days = 0
+
+        status_rows.append({
+            "代码": code, "名称": cfg["name"], "行业": cfg.get("industry", ""),
+            "数据天数": days, "最新日期": last_date,
+            "Parquet": "✓" if parquet_exists else "✗",
+            "DB摘要": "✓" if db_has else "✗",
+        })
+
+    st.dataframe(pd.DataFrame(status_rows).set_index("代码"), use_container_width=True)
+
+    st.divider()
+    st.subheader("检查与修复")
+    col_r1, col_r2 = st.columns([3, 1])
+    with col_r1:
+        check_code = st.selectbox("选择股票", list(STOCKS.keys()),
+                                   format_func=lambda x: f"{x} {STOCKS[x]['name']}",
+                                   key="check_select")
+    with col_r2:
+        if st.button("验证数据", use_container_width=True):
+            status, last_date, days = check_stock_status(check_code)
+            gaps = verify_data_gaps(check_code)
+            name = STOCKS[check_code]["name"]
+            st.info(f"{name}: 状态={status}, 最新={last_date}, {days}天")
+            if gaps:
+                st.warning(f"发现 {len(gaps)} 个日期缺口（>5天）:")
+                for start, end, gap_days in gaps[:10]:
+                    st.caption(f"  {start} → {end} ({gap_days}天)")
+            else:
+                st.success("数据完整，无日期缺口")
+
+    col_r3, col_r4 = st.columns([3, 1])
+    with col_r3:
+        refresh_code = st.selectbox("单只强制刷新", list(STOCKS.keys()),
+                                     format_func=lambda x: f"{x} {STOCKS[x]['name']}",
+                                     key="refresh_select",
+                                     help="覆盖已有数据，重新拉取+处理+同步DB")
+    with col_r4:
+        if st.button("强制刷新该股", use_container_width=True):
+            with st.spinner(f"刷新 {STOCKS[refresh_code]['name']}..."):
+                try:
+                    refresh_single_stock(refresh_code)
+                    st.cache_data.clear()
+                    st.success(f"{STOCKS[refresh_code]['name']} 刷新成功")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"刷新失败: {e}")
+
+# ═══════════════ 今日信号页 ═══════════════
+with page_signal:
+    st.title("今日信号 — 明日做T判断")
+
+    # 数据日期
+    latest_dates = {}
+    for code in STOCKS:
+        cache_path = f"data/processed/{code}_features.parquet"
+        if os.path.exists(cache_path):
+            df = pd.read_parquet(cache_path)
+            latest_dates[code] = df.index.max().strftime("%Y-%m-%d")
+    if latest_dates:
+        max_date = max(latest_dates.values())
+        from datetime import date, timedelta
+        today = date.today()
+        # 简单推算下一个交易日
+        next_day = today + timedelta(days=1)
+        while next_day.weekday() >= 5:
+            next_day += timedelta(days=1)
+        st.caption(f"数据截止: {max_date} | 今日: {today} | 下一交易日: {next_day} | 信号基于最新数据预测明日做T可行性")
+    st.divider()
+
+    summaries = load_all_summaries()
+    if not summaries:
+        st.warning("数据库为空，请先同步数据")
+    else:
+        signal_rows = []
+        for code in STOCKS:
+            if code not in summaries:
+                continue
+            s = summaries[code]
+            name = s.get("name", code)
+
+            score_last = s.get("composite_score_last", 0) or 0
+            sig = s.get("signal_last", 0) or 0
+            amp_score = round((s.get("score_amplitude_last") or 0) * 100)
+            liq_score = round((s.get("score_liquidity_last") or 0) * 100)
+            idio_score = round((s.get("score_idio_last") or 0) * 100)
+            reg_score = round((s.get("score_regime_last") or 0) * 100)
+            amp = s.get("latest_amp", 0) or 0
+            amp_ma20 = s.get("amp_ma_20_last", 0) or 0
+
+            # 判断
+            if score_last >= 0.65 and sig == 1:
+                verdict = "强烈推荐"
+                verdict_color = "#059669"
+                emoji = "🟢"
+            elif score_last >= 0.6 and sig == 1:
+                verdict = "适合做T"
+                verdict_color = "#1a56db"
+                emoji = "🔵"
+            elif score_last >= 0.5:
+                verdict = "谨慎观望"
+                verdict_color = "#d97706"
+                emoji = "🟡"
+            else:
+                verdict = "不建议"
+                verdict_color = "#dc2626"
+                emoji = "🔴"
+
+            signal_rows.append({
+                "code": code, "name": name,
+                "verdict": verdict, "verdict_color": verdict_color, "emoji": emoji,
+                "composite_score": score_last,
+                "signal": sig,
+                "amp_score": amp_score, "liq_score": liq_score,
+                "idio_score": idio_score, "reg_score": reg_score,
+                "latest_amp": amp, "amp_ma20": amp_ma20,
+            })
+
+        # Sort by composite score
+        signal_rows.sort(key=lambda r: r["composite_score"], reverse=True)
+
+        # Summary bar
+        recommend = sum(1 for r in signal_rows if r["verdict"] in ("强烈推荐", "适合做T"))
+        caution = sum(1 for r in signal_rows if r["verdict"] == "谨慎观望")
+        avoid = sum(1 for r in signal_rows if r["verdict"] == "不建议")
+        col_s1, col_s2, col_s3, col_s4 = st.columns(4)
+        col_s1.metric("强烈推荐", recommend, delta=None)
+        col_s2.metric("适合做T", caution, delta=None)
+        col_s3.metric("谨慎观望", avoid, delta=None)
+        col_s4.metric("总计", len(signal_rows), delta=None)
+
+        st.divider()
+
+        # Detail cards for recommended stocks
+        st.subheader("推荐做T标的")
+        top_stocks = [r for r in signal_rows if r["verdict"] in ("强烈推荐", "适合做T")]
+        if top_stocks:
+            cols = st.columns(min(len(top_stocks), 3))
+            for i, r in enumerate(top_stocks):
+                with cols[i % 3]:
+                    bg = "#f0fdf4" if r["verdict"] == "强烈推荐" else "#eff6ff"
+                    border = "#059669" if r["verdict"] == "强烈推荐" else "#1a56db"
+                    st.markdown(f"""
+                    <div style="background:{bg};border:2px solid {border};border-radius:12px;padding:16px;margin-bottom:8px;">
+                        <div style="font-size:1.5rem;">{r['emoji']}</div>
+                        <strong style="font-size:1.1rem;">{r['name']}</strong>
+                        <small style="color:#64748b;">{r['code']}</small>
+                        <div style="font-size:1.4rem;font-weight:800;color:{border};margin:8px 0;">{r['composite_score']:.2f}</div>
+                        <div style="font-size:0.75rem;color:#64748b;">
+                            振幅{r['latest_amp']}% | MA20 {r['amp_ma20']}%<br>
+                            振幅{r['amp_score']} | 流动性{r['liq_score']} | 特质{r['idio_score']} | 市态{r['reg_score']}
+                        </div>
+                        <span style="display:inline-block;background:{border};color:#fff;padding:2px 10px;border-radius:12px;font-size:0.75rem;font-weight:700;margin-top:6px;">{r['verdict']}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        # Full signal table
+        st.divider()
+        st.subheader("全部股票信号明细")
+
+        df_signal = pd.DataFrame(signal_rows)
+        # Build display dataframe
+        display_df = pd.DataFrame({
+            "股票": [f"{r['emoji']} {r['name']}" for r in signal_rows],
+            "代码": [r["code"] for r in signal_rows],
+            "综合评分": [r["composite_score"] for r in signal_rows],
+            "信号": ["做T" if r["signal"] == 1 else "观望" for r in signal_rows],
+            "振幅评分": [r["amp_score"] for r in signal_rows],
+            "流动性": [r["liq_score"] for r in signal_rows],
+            "特质": [r["idio_score"] for r in signal_rows],
+            "市态": [r["reg_score"] for r in signal_rows],
+            "最新振幅": [f"{r['latest_amp']}%" for r in signal_rows],
+            "判断": [r["verdict"] for r in signal_rows],
+        })
+
+        st.dataframe(
+            display_df.set_index("代码"),
+            use_container_width=True,
+            column_config={
+                "综合评分": st.column_config.ProgressColumn(min_value=0, max_value=1, format="%.3f"),
+                "振幅评分": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d"),
+                "流动性": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d"),
+                "特质": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d"),
+                "市态": st.column_config.ProgressColumn(min_value=0, max_value=100, format="%d"),
+            },
+            height=35 * len(signal_rows) + 38,
+        )
+
+        # Score chart
+        st.divider()
+        st.subheader("分项评分对比")
+        chart_signal = pd.DataFrame([
+            {"股票": r["name"], "振幅评分": r["amp_score"], "流动性评分": r["liq_score"],
+             "特质评分": r["idio_score"], "市态评分": r["reg_score"]}
+            for r in sorted(signal_rows, key=lambda x: x["composite_score"], reverse=True)
+        ])
+        chart_signal = chart_signal.set_index("股票")
+        fig = px.bar(chart_signal, barmode="group",
+                     title="各股信号分项评分（越高越好）",
+                     color_discrete_sequence=["#1a56db", "#059669", "#d97706", "#7c3aed"])
+        fig.update_layout(height=350, template="plotly_white",
+                          legend=dict(orientation="h", yanchor="bottom", y=1.02))
+        st.plotly_chart(fig, use_container_width=True)
+
+# ═══════════════ 个股分析页 ═══════════════
+with page_stock:
+    status = st.empty()
+    with status:
+        with st.spinner(f"加载 {STOCKS[stock]['name']}({stock}) 数据中..."):
+            df = load_and_process(stock)
+            analysis = run_analysis(stock)
+            signal_df = run_signals(stock, w_amp, w_liq, w_idio, w_reg, sig_thresh)
+            backtest_df = run_backtest(stock, sig_thresh)
+    status.empty()
+
+    stock_name = STOCKS[stock]["name"]
+    dist = analysis.get("distribution", {})
+    decomp = analysis.get("decomposition", {})
+    season = analysis.get("seasonality", {})
+    tail = analysis.get("tail", {})
+
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["概览", "振幅分析", "联动分析", "信号系统", "回测分析", "实战策略"])
 
 with tab1:
     st.title(f"{stock_name} ({stock}) 做T套利分析")
