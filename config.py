@@ -78,7 +78,7 @@ STOCKS = {
         "market_index": "sh000001",
     },
     "002281": {
-        "active": True,
+        "active": False,
         "name": "光迅科技",
         "industry": "光通信",
         "market_index": "sz399001",
@@ -96,13 +96,13 @@ STOCKS = {
         "market_index": "sz399001",
     },
     "603290": {
-        "active": True,
+        "active": False,
         "name": "斯达半导",
         "industry": "半导体",
         "market_index": "sh000001",
     },
     "00700": {
-        "active": True,
+        "active": False,
         "name": "腾讯控股",
         "industry": "互联网",
         "market_index": "HSI",
