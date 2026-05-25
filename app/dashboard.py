@@ -518,42 +518,46 @@ with page_data:
 
     st.divider()
     st.subheader("关注列表管理")
-    st.caption("点击按钮切换股票的关注状态。关注列表中的股票才会被批量更新和报告。")
+    st.caption("点击股票名称即可在关注/不关注之间切换。关注列表中的股票才会被批量更新和报告。")
 
-    active_codes = [c for c in STOCKS if STOCKS[c].get("active", True)]
-    inactive_codes = [c for c in STOCKS if not STOCKS[c].get("active", True)]
+    active_codes = sorted([c for c in STOCKS if STOCKS[c].get("active", True)],
+                          key=lambda c: STOCKS[c]["name"])
+    inactive_codes = sorted([c for c in STOCKS if not STOCKS[c].get("active", True)],
+                            key=lambda c: STOCKS[c]["name"])
 
     col_left, col_right = st.columns(2)
 
     with col_left:
-        st.markdown("**⭐ 关注列表** (%d只)" % len(active_codes))
-        if active_codes:
-            for c in active_codes:
-                cfg = STOCKS[c]
-                col_name, col_btn = st.columns([4, 1])
-                with col_name:
-                    st.write(f"{cfg['name']} ({c})")
-                with col_btn:
-                    if st.button("→ 移出", key=f"deactivate_{c}", help=f"将{cfg['name']}移至不关注列表"):
-                        set_active(c, False)
-                        st.rerun()
-        else:
-            st.write("（无）")
+        with st.container(border=True, height=400):
+            st.markdown("**⭐ 关注列表**  %d只" % len(active_codes))
+            if active_codes:
+                cols = st.columns(3)
+                for idx, c in enumerate(active_codes):
+                    cfg = STOCKS[c]
+                    with cols[idx % 3]:
+                        label = f"{cfg['name']}\n{c}"
+                        if st.button(label, key=f"deact_{c}", use_container_width=True,
+                                     help=f"点击移出关注列表"):
+                            set_active(c, False)
+                            st.rerun()
+            else:
+                st.write("（无）")
 
     with col_right:
-        st.markdown("**💤 不关注列表** (%d只)" % len(inactive_codes))
-        if inactive_codes:
-            for c in inactive_codes:
-                cfg = STOCKS[c]
-                col_name, col_btn = st.columns([4, 1])
-                with col_name:
-                    st.write(f"{cfg['name']} ({c})")
-                with col_btn:
-                    if st.button("← 关注", key=f"activate_{c}", help=f"将{cfg['name']}移至关注列表"):
-                        set_active(c, True)
-                        st.rerun()
-        else:
-            st.write("（无）")
+        with st.container(border=True, height=400):
+            st.markdown("**💤 不关注列表**  %d只" % len(inactive_codes))
+            if inactive_codes:
+                cols = st.columns(3)
+                for idx, c in enumerate(inactive_codes):
+                    cfg = STOCKS[c]
+                    with cols[idx % 3]:
+                        label = f"{cfg['name']}\n{c}"
+                        if st.button(label, key=f"act_{c}", use_container_width=True,
+                                     help=f"点击加入关注列表"):
+                            set_active(c, True)
+                            st.rerun()
+            else:
+                st.write("（无）")
 
 # ═══════════════ 今日信号页 ═══════════════
 with page_signal:
