@@ -14,7 +14,7 @@ import plotly.express as px
 from plotly.subplots import make_subplots
 import streamlit as st
 
-from config import STOCKS, SIGNAL_WEIGHTS, SIGNAL_THRESHOLD, T_COST, DEFAULT_END_DATE, DEFAULT_START_DATE
+from config import STOCKS, active_stocks, set_active, SIGNAL_WEIGHTS, SIGNAL_THRESHOLD, T_COST, DEFAULT_END_DATE, DEFAULT_START_DATE
 from src.data_fetcher import StockDataFetcher
 from src.data_cleaner import standardize_daily_columns, standardize_index_columns, merge_all
 from src.features import FeatureEngineer
@@ -119,7 +119,7 @@ def check_stock_status(stock_code):
 def smart_refresh_all(status_callback=None):
     """智能刷新：已有且不过时的跳过，只拉取缺失/过时的。返回 (fetched, skipped, failed)"""
     fetched, skipped, failed = [], [], []
-    all_codes = list(STOCKS.keys())
+    all_codes = [c for c in STOCKS if STOCKS[c].get("active", True)]
     for i, code in enumerate(all_codes):
         status, last_date, days = check_stock_status(code)
         name = STOCKS[code]["name"]
@@ -242,7 +242,7 @@ with st.sidebar:
 
     # 先扫描所有股票状态
     status_summary = {"ok": 0, "stale": 0, "missing": 0, "outdated": 0, "no_db_summary": 0, "error": 0}
-    for code in STOCKS:
+    for code in active_stocks():
         s, _, _ = check_stock_status(code)
         status_summary[s] = status_summary.get(s, 0) + 1
     need_fetch = status_summary["missing"] + status_summary["stale"] + status_summary["outdated"] + status_summary["no_db_summary"]
@@ -273,14 +273,14 @@ with st.sidebar:
                       help="将parquet数据同步到SQLite（仅更新摘要统计）"):
             from sync_db import sync_daily, sync_summary
             db2 = AnalysisDB()
-            for code in STOCKS:
+            for code in active_stocks():
                 sync_daily(db2, code)
                 sync_summary(db2, code, force=True)
             db2.close()
             st.cache_data.clear()
             st.success("已同步到数据库")
             st.rerun()
-            for code in STOCKS:
+            for code in active_stocks():
                 sync_daily(db2, code)
                 sync_summary(db2, code, force=True)
             db2.close()
@@ -328,7 +328,7 @@ with page_overview:
     if summaries:
         # ── 市场状态概览 ──
         regime_counts = {"单边涨": 0, "单边跌": 0, "偏涨震荡": 0, "偏跌震荡": 0, "窄幅震荡": 0}
-        for code in STOCKS:
+        for code in active_stocks():
             if code in regimes:
                 lbl = regimes[code].get("label", "")
                 if lbl in regime_counts:
@@ -350,7 +350,7 @@ with page_overview:
 
         # 构建对比表
         rows = []
-        for code in STOCKS:
+        for code in active_stocks():
             if code not in summaries:
                 continue
             s = summaries[code]
@@ -457,7 +457,7 @@ with page_data:
     st.subheader("各股票数据状态")
 
     status_rows = []
-    for code in STOCKS:
+    for code in active_stocks():
         cfg = STOCKS[code]
         parquet_exists = os.path.exists(f"data/processed/{code}_features.parquet")
         db_has = code in stats.get("codes", [])
@@ -516,13 +516,52 @@ with page_data:
                 except Exception as e:
                     st.error(f"刷新失败: {e}")
 
+    st.divider()
+    st.subheader("关注列表管理")
+    st.caption("点击按钮切换股票的关注状态。关注列表中的股票才会被批量更新和报告。")
+
+    active_codes = [c for c in STOCKS if STOCKS[c].get("active", True)]
+    inactive_codes = [c for c in STOCKS if not STOCKS[c].get("active", True)]
+
+    col_left, col_right = st.columns(2)
+
+    with col_left:
+        st.markdown("**⭐ 关注列表** (%d只)" % len(active_codes))
+        if active_codes:
+            for c in active_codes:
+                cfg = STOCKS[c]
+                col_name, col_btn = st.columns([4, 1])
+                with col_name:
+                    st.write(f"{cfg['name']} ({c})")
+                with col_btn:
+                    if st.button("→ 移出", key=f"deactivate_{c}", help=f"将{cfg['name']}移至不关注列表"):
+                        set_active(c, False)
+                        st.rerun()
+        else:
+            st.write("（无）")
+
+    with col_right:
+        st.markdown("**💤 不关注列表** (%d只)" % len(inactive_codes))
+        if inactive_codes:
+            for c in inactive_codes:
+                cfg = STOCKS[c]
+                col_name, col_btn = st.columns([4, 1])
+                with col_name:
+                    st.write(f"{cfg['name']} ({c})")
+                with col_btn:
+                    if st.button("← 关注", key=f"activate_{c}", help=f"将{cfg['name']}移至关注列表"):
+                        set_active(c, True)
+                        st.rerun()
+        else:
+            st.write("（无）")
+
 # ═══════════════ 今日信号页 ═══════════════
 with page_signal:
     st.title("今日信号 — 明日做T判断")
 
     # 数据日期
     latest_dates = {}
-    for code in STOCKS:
+    for code in active_stocks():
         cache_path = f"data/processed/{code}_features.parquet"
         if os.path.exists(cache_path):
             df = pd.read_parquet(cache_path)
@@ -543,7 +582,7 @@ with page_signal:
         st.warning("数据库为空，请先同步数据")
     else:
         signal_rows = []
-        for code in STOCKS:
+        for code in active_stocks():
             if code not in summaries:
                 continue
             s = summaries[code]
@@ -682,7 +721,7 @@ with page_backtest:
         db = get_db()
         all_stats = db.get_signal_stats()
         per_stock = {}
-        for code in STOCKS:
+        for code in active_stocks():
             s = db.get_signal_stats(code)
             if s:
                 name = STOCKS[code]["name"]

@@ -10,7 +10,7 @@
 import sys, os, argparse, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import STOCKS
+from config import STOCKS, active_stocks
 from db import AnalysisDB
 from generate_report import extract_stats, load_config, PROJECT_ROOT
 import pandas as pd
@@ -52,7 +52,7 @@ def main():
     parser.add_argument("--stats-only", action="store_true", help="仅同步摘要统计")
     args = parser.parse_args()
 
-    codes = [args.stock] if args.stock else list(STOCKS.keys())
+    codes = [args.stock] if args.stock else list(active_stocks().keys())
     db = AnalysisDB()
 
     for i, code in enumerate(codes):

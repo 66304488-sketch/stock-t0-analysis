@@ -7,7 +7,7 @@
 import sys, os, json, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from config import STOCKS
+from config import STOCKS, active_stocks
 from db import AnalysisDB
 from generate_report import extract_stats, load_config
 
@@ -22,7 +22,7 @@ STOCK_COLORS = [
 def get_processed_codes():
     processed_dir = os.path.join(PROJECT_ROOT, "data", "processed")
     codes = []
-    for code in STOCKS:
+    for code in active_stocks():
         if os.path.exists(os.path.join(processed_dir, f"{code}_features.parquet")):
             codes.append(code)
     return codes
