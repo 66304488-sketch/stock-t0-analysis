@@ -386,13 +386,14 @@ with page_overview:
                 "GARCH α+β": garch_p,
                 "最佳胜率": best_win,
                 "评价": verdict,
+                "最新数据": s.get("data_end", "-"),
                 "近20日状态": f"{r.get('label', '-')} ({r.get('trend_pct', 0):+.1f}%)",
                 "状态排序": r.get("ratio", 0),
             })
 
         if rows:
             df_view = pd.DataFrame(rows)
-            display_cols = ["代码", "名称", "行业", "日均振幅", "特质占比", "信号率", "综合评分", "近20日状态", "GARCH α+β", "最佳胜率", "评价"]
+            display_cols = ["代码", "名称", "行业", "日均振幅", "特质占比", "信号率", "综合评分", "最新数据", "近20日状态", "GARCH α+β", "最佳胜率", "评价"]
 
             # 排序控制
             sort_map = {"日均振幅": "振幅排序", "特质占比": "特质排序", "信号率": "信号排序", "综合评分": "评分排序"}
