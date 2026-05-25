@@ -331,76 +331,146 @@ def build_strategy(c):
     if c.get("dow_best"):
         timing += "，最佳交易日：<strong>%s</strong>" % c["dow_best"]
 
-    # ── 具体价格计算（基准价=昨日收盘价）──
+    # ── 具体价格计算（基准价=昨日收盘价，入场/出场比例基于历史振幅动态调整）──
     price_html = ""
-    if close_last and close_last > 0 and backtest:
-        top = backtest[0]
-        entry_pct = float(top["entry"])  # e.g. -0.03
-        exit_pct = float(top["exit"])    # e.g. 0.01
+    if close_last and close_last > 0:
+        # 动态比例：取历史振幅的35%，下限1.0%，上限3.0%
+        dyn_pct = max(min(amp_mean * 0.35, 3.0), 1.0)
+        entry_pct = -dyn_pct / 100
+        exit_pct = dyn_pct / 100
+
+        # 如果有回测最优参数，优先使用（但不偏离动态比例太多）
+        if backtest:
+            top = backtest[0]
+            bt_entry = float(top["entry"])
+            bt_exit = float(top["exit"])
+            # 回测参数偏离动态比例超过50%时，取折中
+            if abs(bt_entry - entry_pct) > abs(entry_pct) * 0.5:
+                entry_pct = (bt_entry + entry_pct) / 2
+            if abs(bt_exit - exit_pct) > abs(exit_pct) * 0.5:
+                exit_pct = (bt_exit + exit_pct) / 2
+
         entry_price = round(close_last * (1 + entry_pct), 2)
-        exit_price = round(entry_price * (1 + exit_pct), 2)
+        exit_price = round(close_last * (1 + exit_pct), 2)
         stop_price = round(entry_price * 0.995, 2)  # 0.5% 硬止损
 
-        # 第二组参数（更激进）
-        sec_entry_pct = float(backtest[1]["entry"]) if len(backtest) > 1 else entry_pct * 0.7
-        sec_exit_pct = float(backtest[1]["exit"]) if len(backtest) > 1 else exit_pct * 1.5
-        sec_entry_price = round(close_last * (1 + sec_entry_pct), 2)
-        sec_exit_price = round(sec_entry_price * (1 + sec_exit_pct), 2)
+        # 激进策略：动态比例×1.4
+        agg_pct = min(dyn_pct * 1.4, 4.5)
+        agg_entry_pct = -agg_pct / 100
+        agg_exit_pct = agg_pct / 100
+        agg_entry_price = round(close_last * (1 + agg_entry_pct), 2)
+        agg_exit_price = round(close_last * (1 + agg_exit_pct), 2)
 
-        price_html = """<li><strong>具体操作价格（基准：昨日收盘价 %.2f）：</strong>
+        # 胜率信息
+        if backtest:
+            cons_win = str(top["win_rate"]) + "%"
+            agg_win = str(backtest[1]["win_rate"] if len(backtest) > 1 else top["win_rate"]) + "%"
+        else:
+            cons_win = "—"
+            agg_win = "—"
+
+        price_html = """<li><strong>具体操作价格（基准：昨收 %.2f | 动态比例：±%.1f%% = 历史振幅%.1f%% × 35%%）：</strong>
         <table style="width:100%%;margin:8px 0;border-collapse:collapse;font-size:0.9rem">
         <tr style="background:%s20">
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">策略</td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">入场</td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止盈</td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">止损</td>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">胜率</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700">参考胜率</td>
         </tr>
         <tr style="background:#05966908">
           <td style="padding:6px 10px;border:1px solid #e2e8f0">保守 <span style="font-size:0.75rem;color:#64748b">(推荐)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#059669">%.2f <span style="font-size:0.75rem;color:#64748b">(%+.1f%%)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">%.2f <span style="font-size:0.75rem;color:#64748b">(+%.1f%%)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">%.2f <span style="font-size:0.75rem;color:#64748b">(-0.5%%)</span></td>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0">%s%%</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">%s</td>
         </tr>
         <tr style="background:#d9770608">
-          <td style="padding:6px 10px;border:1px solid #e2e8f0">激进</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">激进 <span style="font-size:0.75rem;color:#64748b">(动态×1.4)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#d97706">%.2f <span style="font-size:0.75rem;color:#64748b">(%+.1f%%)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#dc2626">%.2f <span style="font-size:0.75rem;color:#64748b">(+%.1f%%)</span></td>
           <td style="padding:6px 10px;border:1px solid #e2e8f0;font-weight:700;color:#64748b">%.2f</td>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0">%s%%</td>
+          <td style="padding:6px 10px;border:1px solid #e2e8f0">%s</td>
         </tr>
         </table>
         <span style="font-size:0.75rem;color:#64748b">例：正T — 挂单 %.2f 买入，成交后挂 %.2f 卖出；若跌破 %.2f 止损离场。反T方向相反。</span></li>""" % (
-            close_last,
-            primary,  # color for header bg
+            close_last, dyn_pct, amp_mean,
+            primary,
             entry_price, entry_pct * 100,
             exit_price, exit_pct * 100,
             stop_price,
-            top["win_rate"],
-            sec_entry_price, sec_entry_pct * 100,
-            sec_exit_price, sec_exit_pct * 100,
+            cons_win,
+            agg_entry_price, agg_entry_pct * 100,
+            agg_exit_price, agg_exit_pct * 100,
             stop_price,
-            backtest[1]["win_rate"] if len(backtest) > 1 else top["win_rate"],
+            agg_win,
             entry_price, exit_price, stop_price,
         )
 
-    # ── 开盘涨跌影响规则 ──
+    # ── 走势预判 ──
+    # 综合判断明日V型（先跌后涨→正T有利）还是A型（先涨后跌→反T有利）的概率
+    pattern_score = 0  # 正值偏向V型，负值偏向A型
+    pattern_factors = []
+    if total_ret > 10:
+        pattern_score += 1; pattern_factors.append("中长期上涨趋势，V型概率+1")
+    elif total_ret < -10:
+        pattern_score -= 1; pattern_factors.append("中长期下跌趋势，A型概率+1")
+    recent_amp_trend = c.get("recent30_amp_mean", amp_mean) - amp_mean
+    if recent_amp_trend > 0.3:
+        pattern_score += 0.5; pattern_factors.append("近期振幅扩大，波动加剧")
+    elif recent_amp_trend < -0.3:
+        pattern_score -= 0.5; pattern_factors.append("近期振幅收缩，波动减弱")
+    garch_p = c.get("garch_persistence", 0.5)
+    if garch_p > 0.9:
+        pattern_factors.append("高波动聚集，可能出现连续大振幅")
+    signal_score_last = c.get("composite_score_last", 0)
+    if signal_score_last >= 0.65:
+        pattern_score += 0.5; pattern_factors.append("信号评分高，方向判断可信度提升")
+
+    if pattern_score >= 1:
+        pattern_label = "偏向<span style='color:#059669;font-weight:700'>V型走势</span>（先跌后涨）"
+        pattern_advice = "优先<span style='color:#059669'>正T</span>，挂低价买入等待反弹"
+    elif pattern_score <= -1:
+        pattern_label = "偏向<span style='color:#dc2626;font-weight:700'>A型走势</span>（先涨后跌）"
+        pattern_advice = "优先<span style='color:#dc2626'>反T</span>，高开先卖等待回落接回"
+    else:
+        pattern_label = "走势方向不明确，<span style='color:#d97706;font-weight:700'>震荡格局</span>"
+        pattern_advice = "双向挂单，以先触及为准，严格止损"
+
+    pattern_html = """<li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#fffbeb;border-left:3px solid #d97706">
+      <strong>明日走势预判：</strong>%s（评分: %+.1f）
+      <div style="font-size:0.8rem;color:#64748b;margin-top:2px">%s</div>
+      <div style="font-size:0.8rem;margin-top:2px">操作建议：%s</div></li>""" % (
+        pattern_label, pattern_score,
+        "；".join(pattern_factors) if pattern_factors else "无明显方向信号",
+        pattern_advice)
+
+    # ── 开盘涨跌影响规则（动态阈值 = 基于历史振幅的动态比例）──
+    gap_high = max(dyn_pct, 1.5)  # 显著跳空阈值，不低于1.5%
+    gap_mod = max(dyn_pct * 0.5, 0.5)  # 中等跳空阈值，不低于0.5%
     gap_html = """<li style="margin-top:8px;padding:8px 12px;border-radius:6px;background:#f1f5f9;border-left:3px solid #64748b">
-      <strong>开盘涨跌对入场的影响：</strong>
+      <strong>开盘跳空应对规则（动态阈值：显著≥%.1f%%，中等≥%.1f%%）：</strong>
       <table style="width:100%%;margin:4px 0;border-collapse:collapse;font-size:0.85rem">
-      <tr><td style="padding:4px 8px">开盘<span style="color:#dc2626;font-weight:600">高开 &gt;1.5%%</span></td>
-          <td style="padding:4px 8px;color:#64748b">不宜追高做正T，等待回落至入场价再执行；可优先反T</td></tr>
-      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">高开 0.5~1.5%%</span></td>
-          <td style="padding:4px 8px;color:#64748b">入场价上移0.5%%，止盈目标不变</td></tr>
-      <tr><td style="padding:4px 8px">开盘<span style="color:#0891b2;font-weight:600">平开 ±0.5%%</span></td>
-          <td style="padding:4px 8px;color:#64748b">正常按上表挂单操作，参照昨收价</td></tr>
-      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">低开 0.5~1.5%%</span></td>
-          <td style="padding:4px 8px;color:#64748b">入场价下移0.5%%，可适当加大仓位；止盈可放宽0.2%%</td></tr>
-      <tr><td style="padding:4px 8px">开盘<span style="color:#059669;font-weight:600">低开 &gt;1.5%%</span></td>
-          <td style="padding:4px 8px;color:#64748b">优先正T！以开盘价替代昨收价重新计算入场区间，仓位可加至40%%</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#dc2626;font-weight:600">高开 ≥%.1f%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">不宜追高做正T！等待回落至昨收附近再考虑入场；可优先反T</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">高开 %.1f~%.1f%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价上移0.3~0.5%%，止盈目标不变；优先反T</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#0891b2;font-weight:600">平开 ±%.1f%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">正常按上表挂单操作，以昨收价为基准</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#d97706;font-weight:600">低开 %.1f~%.1f%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">入场价下移0.3~0.5%%，可适当加大仓位；优先正T</td></tr>
+      <tr><td style="padding:4px 8px">开盘<span style="color:#059669;font-weight:600">低开 ≥%.1f%%</span></td>
+          <td style="padding:4px 8px;color:#64748b">黄金正T机会！以开盘价为基准重新计算入场区间，仓位可加至40%%</td></tr>
       </table>
-      <span style="font-size:0.75rem;color:#64748b">核心原则：入场价基于「昨收」为基准计算，开盘偏离超过0.5%%时需微调。原则是「跌多了买，涨多了卖」，不与趋势对抗。</span></li>"""
+      <span style="font-size:0.75rem;color:#64748b">核心原则：开盘价偏离昨收超过%.1f%%时需调整策略。"跌多了买，涨多了卖"，不与趋势对抗。盘中以实际开盘价为基准微调挂单价。</span></li>""" % (
+        gap_high, gap_mod,
+        gap_high,
+        gap_mod, gap_high,
+        gap_mod,
+        gap_mod, gap_high,
+        gap_high,
+        gap_mod,
+    )
 
     # ── 风险提示 ──
     risks = []
@@ -445,6 +515,7 @@ def build_strategy(c):
       %s
       %s
       %s
+      %s
       <li><strong>方向选择：</strong>%s</li>
       <li><strong>季节时机：</strong>%s</li>
       %s
@@ -456,6 +527,7 @@ def build_strategy(c):
         grade_color, grade, amp_mean, amp_median, round(idio_ratio * 100, 1),
         signal_pct, score,
         sig_html,
+        pattern_html,
         price_html,
         gap_html,
         direction, timing,
