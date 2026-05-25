@@ -138,5 +138,130 @@
     "filepath": "data/raw/industry_半导体_20210101_20260522.parquet",
     "fetch_time": "2026-05-25T07:25:45.336599",
     "rows": 732
+  },
+  "daily__601899__20210101__20260525": {
+    "filepath": "data/raw/daily_601899_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:07:52.223781",
+    "rows": 1302
+  },
+  "index__sh000001__20210101__20260525": {
+    "filepath": "data/raw/index_sh000001_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:07:52.667759",
+    "rows": 1302
+  },
+  "industry__贵金属__20210101__20260525": {
+    "filepath": "data/raw/industry_贵金属_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:07:54.564406",
+    "rows": 732
+  },
+  "daily__513050__20210101__20260525": {
+    "filepath": "data/raw/daily_513050_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:04.777527",
+    "rows": 1302
+  },
+  "daily__600031__20210101__20260525": {
+    "filepath": "data/raw/daily_600031_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:23.987533",
+    "rows": 1302
+  },
+  "industry__工程机械__20210101__20260525": {
+    "filepath": "data/raw/industry_工程机械_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:25.575979",
+    "rows": 732
+  },
+  "daily__601225__20210101__20260525": {
+    "filepath": "data/raw/daily_601225_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:32.440046",
+    "rows": 1302
+  },
+  "daily__600519__20210101__20260525": {
+    "filepath": "data/raw/daily_600519_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:43.505744",
+    "rows": 1302
+  },
+  "industry__白酒__20210101__20260525": {
+    "filepath": "data/raw/industry_白酒_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:45.154228",
+    "rows": 732
+  },
+  "daily__601127__20210101__20260525": {
+    "filepath": "data/raw/daily_601127_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:08:48.850240",
+    "rows": 1302
+  },
+  "daily__601058__20210101__20260525": {
+    "filepath": "data/raw/daily_601058_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:00.092886",
+    "rows": 1302
+  },
+  "daily__603290__20210101__20260525": {
+    "filepath": "data/raw/daily_603290_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:11.414002",
+    "rows": 1302
+  },
+  "industry__半导体__20210101__20260525": {
+    "filepath": "data/raw/industry_半导体_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:13.065905",
+    "rows": 732
+  },
+  "daily__603444__20210101__20260525": {
+    "filepath": "data/raw/daily_603444_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:16.934493",
+    "rows": 1302
+  },
+  "industry__游戏__20210101__20260525": {
+    "filepath": "data/raw/industry_游戏_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:18.445320",
+    "rows": 732
+  },
+  "daily__300750__20210101__20260525": {
+    "filepath": "data/raw/daily_300750_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:22.228609",
+    "rows": 1302
+  },
+  "index__sz399006__20210101__20260525": {
+    "filepath": "data/raw/index_sz399006_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:22.498497",
+    "rows": 1302
+  },
+  "industry__电池__20210101__20260525": {
+    "filepath": "data/raw/industry_电池_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:24.031582",
+    "rows": 732
+  },
+  "daily__002928__20210101__20260525": {
+    "filepath": "data/raw/daily_002928_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:27.827960",
+    "rows": 1302
+  },
+  "index__sz399001__20210101__20260525": {
+    "filepath": "data/raw/index_sz399001_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:28.167435",
+    "rows": 1302
+  },
+  "daily__002318__20210101__20260525": {
+    "filepath": "data/raw/daily_002318_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:39.088202",
+    "rows": 1302
+  },
+  "daily__002182__20210101__20260525": {
+    "filepath": "data/raw/daily_002182_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:09:50.222654",
+    "rows": 1300
+  },
+  "daily__002281__20210101__20260525": {
+    "filepath": "data/raw/daily_002281_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:10:01.439838",
+    "rows": 1302
+  },
+  "daily__002714__20210101__20260525": {
+    "filepath": "data/raw/daily_002714_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:10:12.868578",
+    "rows": 1302
+  },
+  "daily__002028__20210101__20260525": {
+    "filepath": "data/raw/daily_002028_20210101_20260525.parquet",
+    "fetch_time": "2026-05-25T08:10:23.837439",
+    "rows": 1302
   }
 }

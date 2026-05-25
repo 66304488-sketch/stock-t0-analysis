@@ -1,0 +1,222 @@
+{
+  "date": "2026-05-25",
+  "signal_date": "2026-05-22",
+  "generated_at": "2026-05-25 08:13",
+  "stocks": {
+    "recommended": [
+      {
+        "name": "斯达半导",
+        "code": "603290",
+        "score": 0.859,
+        "close": 131.75,
+        "hist_amp": 4.07,
+        "conservative": {
+          "entry": 129.77,
+          "exit": 133.73,
+          "stop": 129.12
+        },
+        "aggressive": {
+          "entry": 128.46,
+          "exit": 135.04,
+          "stop": 127.81
+        }
+      },
+      {
+        "name": "赛力斯",
+        "code": "601127",
+        "score": 0.8583,
+        "close": 82.03,
+        "hist_amp": 4.83,
+        "conservative": {
+          "entry": 80.8,
+          "exit": 83.26,
+          "stop": 80.4
+        },
+        "aggressive": {
+          "entry": 79.98,
+          "exit": 84.08,
+          "stop": 79.58
+        }
+      },
+      {
+        "name": "陕西煤业",
+        "code": "601225",
+        "score": 0.8419,
+        "close": 23.32,
+        "hist_amp": 3.21,
+        "conservative": {
+          "entry": 22.97,
+          "exit": 23.67,
+          "stop": 22.86
+        },
+        "aggressive": {
+          "entry": 22.74,
+          "exit": 23.9,
+          "stop": 22.62
+        }
+      },
+      {
+        "name": "牧原股份",
+        "code": "002714",
+        "score": 0.8148,
+        "close": 38.84,
+        "hist_amp": 3.15,
+        "conservative": {
+          "entry": 38.26,
+          "exit": 39.42,
+          "stop": 38.07
+        },
+        "aggressive": {
+          "entry": 37.87,
+          "exit": 39.81,
+          "stop": 37.68
+        }
+      },
+      {
+        "name": "贵州茅台",
+        "code": "600519",
+        "score": 0.8061,
+        "close": 1290.2,
+        "hist_amp": 2.04,
+        "conservative": {
+          "entry": 1270.85,
+          "exit": 1309.55,
+          "stop": 1264.49
+        },
+        "aggressive": {
+          "entry": 1257.94,
+          "exit": 1322.45,
+          "stop": 1251.66
+        }
+      },
+      {
+        "name": "紫金矿业",
+        "code": "601899",
+        "score": 0.706,
+        "close": 30.96,
+        "hist_amp": 2.99,
+        "conservative": {
+          "entry": 30.5,
+          "exit": 31.42,
+          "stop": 30.34
+        },
+        "aggressive": {
+          "entry": 30.19,
+          "exit": 31.73,
+          "stop": 30.04
+        }
+      },
+      {
+        "name": "久立特材",
+        "code": "002318",
+        "score": 0.661,
+        "close": 26.4,
+        "hist_amp": 3.37,
+        "conservative": {
+          "entry": 26.0,
+          "exit": 26.8,
+          "stop": 25.87
+        },
+        "aggressive": {
+          "entry": 25.74,
+          "exit": 27.06,
+          "stop": 25.61
+        }
+      },
+      {
+        "name": "吉比特",
+        "code": "603444",
+        "score": 0.6521,
+        "close": 355.1,
+        "hist_amp": 3.84,
+        "conservative": {
+          "entry": 349.77,
+          "exit": 360.43,
+          "stop": 348.02
+        },
+        "aggressive": {
+          "entry": 346.22,
+          "exit": 363.98,
+          "stop": 344.49
+        }
+      },
+      {
+        "name": "赛轮轮胎",
+        "code": "601058",
+        "score": 0.6497,
+        "close": 12.79,
+        "hist_amp": 3.65,
+        "conservative": {
+          "entry": 12.6,
+          "exit": 12.98,
+          "stop": 12.54
+        },
+        "aggressive": {
+          "entry": 12.47,
+          "exit": 13.11,
+          "stop": 12.41
+        }
+      },
+      {
+        "name": "三一重工",
+        "code": "600031",
+        "score": 0.6375,
+        "close": 18.96,
+        "hist_amp": 2.75,
+        "conservative": {
+          "entry": 18.68,
+          "exit": 19.24,
+          "stop": 18.58
+        },
+        "aggressive": {
+          "entry": 18.49,
+          "exit": 19.43,
+          "stop": 18.39
+        }
+      }
+    ],
+    "watch": [
+      {
+        "name": "光迅科技",
+        "code": "002281",
+        "score": 0.557
+      },
+      {
+        "name": "华夏航空",
+        "code": "002928",
+        "score": 0.5544
+      },
+      {
+        "name": "思源电气",
+        "code": "002028",
+        "score": 0.5098
+      },
+      {
+        "name": "宝武镁业",
+        "code": "002182",
+        "score": 0.4671
+      },
+      {
+        "name": "宁德时代",
+        "code": "300750",
+        "score": 0.3853
+      },
+      {
+        "name": "中概互联ETF",
+        "code": "513050",
+        "score": 0.367
+      },
+      {
+        "name": "腾讯控股",
+        "code": "00700",
+        "score": 0.3491
+      }
+    ]
+  },
+  "win_criteria": "当日实际振幅 > 1.5% (双边成本) 即为做T成功",
+  "benchmarks": {
+    "pass_threshold": "振幅 >= 1.65% (含0.15%成本)",
+    "good": "振幅 >= 2.5%",
+    "excellent": "振幅 >= 3.5%"
+  }
+}
