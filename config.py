@@ -111,7 +111,7 @@ STOCKS = {
 
 # ---- 数据日期范围 ----
 DEFAULT_START_DATE = "20210101"  # ~4年
-DEFAULT_END_DATE = "20260525"
+DEFAULT_END_DATE = "20260526"
 
 # ---- 数据缓存 ----
 CACHE_DIR = "data/raw"

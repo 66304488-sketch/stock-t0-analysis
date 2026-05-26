@@ -248,5 +248,115 @@
     "filepath": "data/raw/daily_513050_20210101_20260525.parquet",
     "fetch_time": "2026-05-25T16:04:37.848214",
     "rows": 1302
+  },
+  "daily__600031__20210101__20260526": {
+    "filepath": "data/raw/daily_600031_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:04:48.949834",
+    "rows": 1304
+  },
+  "index__sh000001__20210101__20260526": {
+    "filepath": "data/raw/index_sh000001_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:04:49.436135",
+    "rows": 1304
+  },
+  "industry__工程机械__20210101__20260526": {
+    "filepath": "data/raw/industry_工程机械_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:04:52.386032",
+    "rows": 732
+  },
+  "daily__601899__20210101__20260526": {
+    "filepath": "data/raw/daily_601899_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:12.043034",
+    "rows": 1304
+  },
+  "industry__贵金属__20210101__20260526": {
+    "filepath": "data/raw/industry_贵金属_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:14.760289",
+    "rows": 732
+  },
+  "daily__601225__20210101__20260526": {
+    "filepath": "data/raw/daily_601225_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:20.432672",
+    "rows": 1304
+  },
+  "daily__600519__20210101__20260526": {
+    "filepath": "data/raw/daily_600519_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:33.650793",
+    "rows": 1304
+  },
+  "industry__白酒__20210101__20260526": {
+    "filepath": "data/raw/industry_白酒_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:35.644489",
+    "rows": 732
+  },
+  "daily__300750__20210101__20260526": {
+    "filepath": "data/raw/daily_300750_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:41.604754",
+    "rows": 1304
+  },
+  "index__sz399006__20210101__20260526": {
+    "filepath": "data/raw/index_sz399006_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:41.917226",
+    "rows": 1303
+  },
+  "industry__电池__20210101__20260526": {
+    "filepath": "data/raw/industry_电池_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:43.987875",
+    "rows": 732
+  },
+  "daily__513050__20210101__20260526": {
+    "filepath": "data/raw/daily_513050_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:05:52.729434",
+    "rows": 1304
+  },
+  "daily__002928__20210101__20260526": {
+    "filepath": "data/raw/daily_002928_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:05.863948",
+    "rows": 1304
+  },
+  "index__sz399001__20210101__20260526": {
+    "filepath": "data/raw/index_sz399001_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:06.244739",
+    "rows": 1303
+  },
+  "daily__002318__20210101__20260526": {
+    "filepath": "data/raw/daily_002318_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:19.171243",
+    "rows": 1304
+  },
+  "daily__603444__20210101__20260526": {
+    "filepath": "data/raw/daily_603444_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:32.303922",
+    "rows": 1304
+  },
+  "industry__游戏__20210101__20260526": {
+    "filepath": "data/raw/industry_游戏_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:35.269030",
+    "rows": 732
+  },
+  "daily__601127__20210101__20260526": {
+    "filepath": "data/raw/daily_601127_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:41.381073",
+    "rows": 1304
+  },
+  "daily__002182__20210101__20260526": {
+    "filepath": "data/raw/daily_002182_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:06:54.337885",
+    "rows": 1302
+  },
+  "daily__601058__20210101__20260526": {
+    "filepath": "data/raw/daily_601058_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:07:07.616728",
+    "rows": 1304
+  },
+  "daily__002714__20210101__20260526": {
+    "filepath": "data/raw/daily_002714_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:07:21.027153",
+    "rows": 1304
+  },
+  "daily__002028__20210101__20260526": {
+    "filepath": "data/raw/daily_002028_20210101_20260526.parquet",
+    "fetch_time": "2026-05-26T18:07:34.435812",
+    "rows": 1304
   }
 }
